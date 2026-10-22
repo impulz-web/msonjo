@@ -58,7 +58,6 @@ export default async function ReportsPage({ searchParams }: { searchParams: Repo
   const dailyRows = Array.isArray(report?.sales_by_day) ? report.sales_by_day.map((row) => jsonObject(row)).filter((row): row is NonNullable<typeof row> => row !== null) : [];
   const productRows = Array.isArray(report?.sales_by_product) ? report.sales_by_product.map((row) => jsonObject(row)).filter((row): row is NonNullable<typeof row> => row !== null) : [];
   const lowStockRows = Array.isArray(report?.low_stock_products) ? report.low_stock_products.map((row) => jsonObject(row)).filter((row): row is NonNullable<typeof row> => row !== null) : [];
-  const movementRows = Array.isArray(report?.stock_movements) ? report.stock_movements.map((row) => jsonObject(row)).filter((row): row is NonNullable<typeof row> => row !== null) : [];
 
   return (
     <>
@@ -114,20 +113,6 @@ export default async function ReportsPage({ searchParams }: { searchParams: Repo
               </table>
             </div>
             {lowStockRows.length === 100 ? <p className="px-4 py-2 text-xs text-neutral-600">Showing the first 100 products needing attention.</p> : null}
-          </section>
-          <section className="mt-6 rounded border border-neutral-200">
-            <div className="flex items-center justify-between border-b border-neutral-200 px-4 py-4">
-              <h2 className="text-sm font-semibold">Stock movements in period</h2>
-              <Link href="/stock" className="text-sm text-[#E31E24] underline">Complete movement history</Link>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[520px] text-left text-sm"><thead className="bg-[#F5F5F5] text-xs uppercase text-neutral-600"><tr><th className="px-4 py-3">Date</th><th className="px-4 py-3">Product</th><th className="px-4 py-3">Movement</th><th className="px-4 py-3">Change</th></tr></thead>
-                <tbody>{movementRows.map((row) => <tr key={jsonString(row.id)} className="border-t border-neutral-200"><td className="px-4 py-3">{jsonString(row.created_at) ? new Intl.DateTimeFormat('en-KE', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Africa/Nairobi' }).format(new Date(jsonString(row.created_at)!)) : '—'}</td><td className="px-4 py-3">{jsonString(row.product_name)}</td><td className="px-4 py-3">{jsonString(row.movement_type)}</td><td className="px-4 py-3">{(jsonNumber(row.quantity_change) ?? 0) > 0 ? '+' : ''}{jsonNumber(row.quantity_change) ?? 0}</td></tr>)}
-                  {!movementRows.length ? <tr><td colSpan={4} className="px-4 py-8 text-center text-neutral-600">No stock movements recorded for this period.</td></tr> : null}
-                </tbody>
-              </table>
-            </div>
-            {movementRows.length === 100 ? <p className="px-4 py-2 text-xs text-neutral-600">Showing the most recent 100 movements in this range. Open full history to paginate and filter all records.</p> : null}
           </section>
           <section className="mt-6 rounded border border-neutral-200">
             <h2 className="border-b border-neutral-200 px-4 py-4 text-sm font-semibold">Sales by product</h2>

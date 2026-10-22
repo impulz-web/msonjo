@@ -1,7 +1,6 @@
 'use client';
 
 import {
-  ArrowLeftRight,
   BarChart3,
   Home,
   Menu,
@@ -20,7 +19,6 @@ import { signOutAction } from '@/app/actions';
 const navigation = [
   { label: 'Overview', href: '/dashboard', icon: Home },
   { label: 'Products', href: '/products', icon: Package },
-  { label: 'Stock movements', href: '/stock', icon: ArrowLeftRight },
   { label: 'New sale', href: '/sales/new', icon: Plus },
   { label: 'Sales history', href: '/sales', icon: ShoppingCart },
   { label: 'Reports', href: '/reports', icon: BarChart3 },

@@ -9,7 +9,6 @@ export default async function NewProductPage() {
   return (
     <>
       <InventoryPageHeader title="Add product" description="Create a product and optionally record its initial stock." />
-      <p className="mb-5 text-sm text-neutral-600">Every opening stock quantity is recorded as an auditable stock movement.</p>
       <ProductForm initialOperationKey={randomUUID()} />
       <Link href="/products" className="mt-5 inline-flex text-sm text-[#E31E24] underline">Cancel</Link>
     </>

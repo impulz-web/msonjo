@@ -17,7 +17,6 @@ export default async function OverviewPage() {
   const dashboard = error ? null : jsonObject(data);
   const shortcuts = [
     { label: 'Products', description: 'Browse, search, and manage your items.', href: '/products' },
-    { label: 'Stock movements', description: 'Review stock changes and adjustments.', href: '/stock' },
     { label: 'Sales history', description: 'Review completed transactions.', href: '/sales' },
     { label: 'Reports', description: 'See sales and inventory summaries.', href: '/reports' },
   ];
@@ -54,7 +53,7 @@ export default async function OverviewPage() {
         </Link>
       </div>
 
-      <section aria-label="Business tools" className="mb-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <section aria-label="Business tools" className="mb-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {shortcuts.map(({ label, description, href }) => (
           <Link
             key={href}
@@ -137,22 +136,6 @@ export default async function OverviewPage() {
                   );
                 })}
                 {!arrayOfObjects(dashboard.recent_sales).length ? <li className="px-4 py-8 text-center text-sm text-neutral-600">No sales recorded yet.</li> : null}
-              </ul>
-            </section>
-
-            <section className="rounded border border-neutral-200 bg-white lg:col-span-2">
-              <div className="flex items-center justify-between border-b border-neutral-200 px-4 py-4">
-                <h2 className="text-sm font-semibold text-[#252525]">Recent stock movements</h2>
-                <Link href="/stock" className="text-sm text-[#E31E24] underline">Movement history</Link>
-              </div>
-              <ul className="divide-y divide-neutral-200 sm:grid sm:grid-cols-2">
-                {arrayOfObjects(dashboard.recent_movements).map((movement) => (
-                  <li key={jsonString(movement.id)} className="flex items-center justify-between gap-3 px-4 py-3 text-sm">
-                    <span className="min-w-0 truncate">{jsonString(movement.product_name) ?? 'Product'} · {jsonString(movement.movement_type) ?? 'movement'}</span>
-                    <span className="shrink-0 font-medium">{(jsonNumber(movement.quantity_change) ?? 0) > 0 ? '+' : ''}{jsonNumber(movement.quantity_change) ?? 0}</span>
-                  </li>
-                ))}
-                {!arrayOfObjects(dashboard.recent_movements).length ? <li className="px-4 py-8 text-center text-sm text-neutral-600 sm:col-span-2">No stock movements recorded yet.</li> : null}
               </ul>
             </section>
           </div>

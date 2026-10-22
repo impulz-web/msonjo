@@ -53,7 +53,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
       </section>
       {canAdjust ? (
         <section className="mt-8 max-w-xl rounded border border-neutral-200 p-4 sm:p-5">
-          <h2 className="mb-4 text-base font-semibold">Record a stock movement</h2>
+          <h2 className="mb-4 text-base font-semibold">Adjust stock</h2>
           <StockAdjustmentForm productId={product.id} operationKey={randomUUID()} />
         </section>
       ) : null}

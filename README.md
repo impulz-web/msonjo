@@ -147,8 +147,10 @@ member's role.
 
 ## Existing functionality and scope
 
-The current codebase implements product management, stock adjustments and
-movement history, sales (including payments and sale edits), low-stock
-indicators, dashboard summaries, and reports. It does not currently contain
+The current codebase implements product management and stock adjustments
+(stock movement records remain in the database for inventory integrity, but
+their history page and dashboard/report panels are not exposed), sales
+(including payments and sale edits), low-stock indicators, dashboard
+summaries, and reports. It does not currently contain
 purchase, supplier, or expense modules; this branding/architecture update does
 not replace them with mock screens or claim they are implemented.

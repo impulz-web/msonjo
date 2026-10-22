@@ -37,7 +37,7 @@ export default function StockAdjustmentForm({ productId, operationKey }: { produ
       {state.success ? <p role="status" className="text-sm text-[#E31E24]">{state.success}</p> : null}
       <button type="submit" disabled={pending || !currentOperationKey}
         className="inline-flex min-h-11 items-center rounded bg-[#E31E24] px-4 text-sm font-medium !text-white hover:!text-white disabled:!text-white disabled:cursor-not-allowed disabled:opacity-60">
-        {pending ? 'Recording…' : 'Record stock movement'}
+        {pending ? 'Saving…' : 'Save stock adjustment'}
       </button>
     </form>
   );

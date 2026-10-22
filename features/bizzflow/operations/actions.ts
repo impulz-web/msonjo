@@ -117,7 +117,6 @@ export async function createProductAction(
 
   revalidatePath('/');
   revalidatePath('/products');
-  revalidatePath('/stock');
   redirect(`/products/${data}`);
 }
 
@@ -211,7 +210,6 @@ export async function adjustStockAction(
 
   revalidatePath('/');
   revalidatePath('/products');
-  revalidatePath('/stock');
   revalidatePath(`/products/${productId}`);
   return { success: 'Stock updated and movement recorded.' };
 }
@@ -276,7 +274,6 @@ export async function createSaleAction(
   revalidatePath('/');
   revalidatePath('/dashboard');
   revalidatePath('/products');
-  revalidatePath('/stock');
   revalidatePath('/sales');
   revalidatePath('/reports');
   return { success: 'Sale recorded.', saleId: data };
@@ -390,7 +387,6 @@ export async function editSaleAction(
   revalidatePath('/');
   revalidatePath('/dashboard');
   revalidatePath('/products');
-  revalidatePath('/stock');
   revalidatePath('/sales');
   revalidatePath(`/sales/${saleId}`);
   revalidatePath('/reports');
