@@ -94,7 +94,7 @@ do update set role = excluded.role;
 
 Only `app_metadata.role = 'admin'` grants access to User administration;
 user-editable `user_metadata` is never used for that check. Sign in with the
-admin username and password, then use **User administration** to create
+admin username or the exact Supabase Auth email and password, then use **User administration** to create
 username/password accounts, optionally record a contact email, and assign
 their inventory role. Admins can view and update contact emails in the user
 list; these are stored as `user_metadata.contact_email` in Supabase Auth.
@@ -110,10 +110,12 @@ open form only, so it must be shared with the user before leaving or reloading
 the page. Use a unique password and have the user keep it private.
 
 The app creates confirmed internal Auth identities with the email address
-`<username>@msonjo-<project-ref>.com`; users sign in with their username and
-password and do not need a real email address. Contact email is separate from
-that internal Auth sign-in email and is not currently used for notifications
-or account recovery. App users cannot add themselves to
+`<username>@msonjo-<project-ref>.com`; users can sign in with their username
+or that exact Supabase Auth email and password, and do not need a real email
+address. A contact email saved in user metadata is not an Auth sign-in email;
+users with dashboard-created accounts should use their username. Contact
+email is not currently used for notifications or account recovery. App users
+cannot add themselves to
 `business_members`; authenticated data remains scoped by the existing RLS
 policies and membership checks. Products, sales, stock movements, and reports
 are shared across devices for authorized MSONJO members, subject to each

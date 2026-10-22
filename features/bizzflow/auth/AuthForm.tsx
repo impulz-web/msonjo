@@ -19,16 +19,19 @@ export default function AuthForm({ enabled }: { enabled: boolean }) {
         </p>
       ) : null}
       <label className="block text-sm font-medium text-[#252525]">
-        Username
+        Email or username
         <input
           autoCapitalize="none"
           autoComplete="username"
           className="mt-1 min-h-11 w-full rounded border border-neutral-300 bg-white px-3 text-sm text-[#252525] outline-none focus:border-[#E31E24] focus:ring-1 focus:ring-[#E31E24]"
-          name="username"
+          name="identifier"
           required
           minLength={3}
-          maxLength={32}
+          maxLength={254}
         />
+        <span className="mt-1 block text-xs font-normal text-neutral-600">
+          Use your Supabase Auth email or your MSONJO username.
+        </span>
       </label>
 
       <label className="block text-sm font-medium text-[#252525]">

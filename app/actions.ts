@@ -27,11 +27,13 @@ async function hasMsonjoAccess(userId: string) {
 }
 
 export async function loginAction(_state: FormState, formData: FormData): Promise<FormState> {
-  const username = field(formData, 'username').toLowerCase();
+  const identifier = field(formData, 'identifier').toLowerCase();
   const password = passwordField(formData, 'password');
 
-  if (!/^[a-z0-9][a-z0-9._-]{2,31}$/.test(username) || password.length < 1) {
-    return { error: 'Enter your username and password.' };
+  const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(identifier);
+  const isUsername = /^[a-z0-9][a-z0-9._-]{2,31}$/.test(identifier);
+  if ((!isEmail && !isUsername) || password.length < 1) {
+    return { error: 'Enter a valid email or username and your password.' };
   }
 
   const supabase = await createSupabaseServerClient();
@@ -39,7 +41,9 @@ export async function loginAction(_state: FormState, formData: FormData): Promis
   if (!projectUrl) {
     redirect('/configuration');
   }
-  const loginEmail = getMsonjoAuthEmail(username, projectUrl);
+  const loginEmail = isEmail
+    ? identifier
+    : getMsonjoAuthEmail(identifier, projectUrl);
   const { data, error } = await supabase.auth.signInWithPassword({ email: loginEmail, password });
 
   if (error || !data.user) {
