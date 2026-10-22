@@ -1,6 +1,6 @@
 'use client';
 
-import { Eye, EyeOff, KeyRound, Save, UserPlus } from 'lucide-react';
+import { Eye, EyeOff, KeyRound, Save, UserPlus, Users } from 'lucide-react';
 import { useActionState, useState } from 'react';
 import {
   createManagedUserAction,
@@ -277,56 +277,71 @@ function ResetPasswordForm({ userId }: { userId: string }) {
 
 export default function AdminUserPanel({ users }: { users: ManagedUser[] }) {
   return (
-    <div className="space-y-8">
-      <section aria-labelledby="create-user-heading" className="space-y-4">
-        <div>
-          <h2 id="create-user-heading" className="text-base font-semibold text-[#252525]">Create a user</h2>
-          <p className="mt-1 text-sm text-neutral-600">
-            Set the user’s name, username, optional contact email, password, and choose manager or attendant access.
-          </p>
+    <div className="space-y-3">
+      <details className="group rounded border border-neutral-200 bg-white">
+        <summary className="flex min-h-14 cursor-pointer list-none items-center gap-3 px-4 py-3 marker:hidden [&::-webkit-details-marker]:hidden">
+          <UserPlus aria-hidden="true" className="size-4 shrink-0 text-[#E31E24]" />
+          <span className="flex-1">
+            <span className="block text-sm font-semibold text-[#252525]">Add user</span>
+            <span className="mt-0.5 block text-xs text-neutral-600">Create a manager or attendant account</span>
+          </span>
+          <span aria-hidden="true" className="text-xl leading-none text-neutral-500 group-open:rotate-45">+</span>
+        </summary>
+        <div className="border-t border-neutral-200 p-4 sm:p-5">
+          <CreateUserForm />
         </div>
-        <CreateUserForm />
-      </section>
+      </details>
 
-      <section aria-labelledby="users-heading" className="space-y-3">
-        <div>
-          <h2 id="users-heading" className="text-base font-semibold text-[#252525]">MSONJO users</h2>
-          <p className="mt-1 text-sm text-neutral-600">
-            View and update contact emails, or reset a password if a user forgets it. Existing passwords cannot be viewed.
-          </p>
+      <details className="group rounded border border-neutral-200 bg-white">
+        <summary className="flex min-h-14 cursor-pointer list-none items-center gap-3 px-4 py-3 marker:hidden [&::-webkit-details-marker]:hidden">
+          <Users aria-hidden="true" className="size-4 shrink-0 text-[#E31E24]" />
+          <span className="flex-1">
+            <span className="block text-sm font-semibold text-[#252525]">Users</span>
+            <span className="mt-0.5 block text-xs text-neutral-600">
+              {users.length} {users.length === 1 ? 'account' : 'accounts'} · Select a user to manage access
+            </span>
+          </span>
+          <span aria-hidden="true" className="text-xl leading-none text-neutral-500 group-open:rotate-45">+</span>
+        </summary>
+        <div className="border-t border-neutral-200 p-3 sm:p-4">
+          {users.length ? (
+            <ul className="space-y-2">
+              {users.map((user) => (
+                <li key={user.id}>
+                  <details className="group/user rounded border border-neutral-200 bg-white">
+                    <summary className="flex min-h-14 cursor-pointer list-none flex-wrap items-center gap-x-3 gap-y-1 px-3 py-3 marker:hidden [&::-webkit-details-marker]:hidden sm:px-4">
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-sm font-semibold text-[#252525]">{user.name}</span>
+                        <span className="mt-0.5 block text-xs text-neutral-600">@{user.username}</span>
+                      </span>
+                      <span className="rounded bg-[#F5F5F5] px-2 py-1 text-xs font-medium capitalize text-[#252525]">
+                        {user.role}
+                      </span>
+                      <span aria-hidden="true" className="text-xl leading-none text-neutral-500 group-open/user:rotate-45">+</span>
+                    </summary>
+                    <div className="border-t border-neutral-200 bg-[#F5F5F5] p-3 sm:p-4">
+                      <div className="mb-4 space-y-1 text-sm">
+                        <p className="font-semibold text-[#252525]">{user.name}</p>
+                        <p className="text-neutral-600">Contact email: {user.contactEmail || 'Not set'}</p>
+                        {user.authEmail ? (
+                          <p className="break-all text-neutral-600">Supabase Auth: {user.authEmail}</p>
+                        ) : null}
+                      </div>
+                      <InventoryRoleForm userId={user.id} role={user.role} />
+                      <ContactEmailForm userId={user.id} contactEmail={user.contactEmail} />
+                      <ResetPasswordForm userId={user.id} />
+                    </div>
+                  </details>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="rounded border border-neutral-200 bg-[#F5F5F5] p-4 text-sm text-neutral-600">
+              No users have been added yet.
+            </p>
+          )}
         </div>
-        {users.length ? (
-          <ul className="divide-y divide-neutral-200 rounded border border-neutral-200">
-            {users.map((user) => (
-              <li key={user.id} className="p-4 sm:p-5">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div>
-                    <h3 className="text-sm font-semibold text-[#252525]">{user.name}</h3>
-                    <p className="mt-1 text-sm text-neutral-600">
-                      @{user.username} · {user.role}
-                    </p>
-                    <p className="mt-1 text-sm text-neutral-600">
-                      Contact email: {user.contactEmail || 'Not set'}
-                    </p>
-                    {user.authEmail ? (
-                      <p className="mt-1 text-sm text-neutral-600">
-                        Supabase Auth: {user.authEmail}
-                      </p>
-                    ) : null}
-                  </div>
-                </div>
-                <InventoryRoleForm userId={user.id} role={user.role} />
-                <ContactEmailForm userId={user.id} contactEmail={user.contactEmail} />
-                <ResetPasswordForm userId={user.id} />
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="rounded border border-neutral-200 bg-[#F5F5F5] p-4 text-sm text-neutral-600">
-            No managed users have been created yet.
-          </p>
-        )}
-      </section>
+      </details>
     </div>
   );
 }
