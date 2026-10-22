@@ -111,7 +111,7 @@ export async function createProductAction(
 
   if (error) {
     return { error: error?.code === '23505'
-      ? 'That SKU is already used by a product in this business.'
+      ? 'That product code is already used by a product in this business.'
       : 'Product could not be saved. Check database setup and try again.' };
   }
 
@@ -151,7 +151,7 @@ export async function updateProductAction(
 
   if (error || !data) {
     return { error: error?.code === '23505'
-      ? 'That SKU is already used by another product in this business.'
+      ? 'That product code is already used by another product in this business.'
       : 'Product could not be updated. It may have been removed or is not available to this business.' };
   }
 

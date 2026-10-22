@@ -36,7 +36,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
       />
       <section aria-label="Product details" className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {[
-          ['SKU', product.sku || '—'], ['Category', product.category || '—'],
+          ['Product code', product.sku || '—'], ['Category', product.category || '—'],
           ['Selling price', formatKes(product.selling_price)],
           ['Quantity on hand', String(product.quantity)], ['Stock status', status],
           ['Low-stock threshold', String(product.low_stock_threshold)],

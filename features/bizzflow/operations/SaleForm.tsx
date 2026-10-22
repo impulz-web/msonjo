@@ -221,7 +221,7 @@ export default function SaleForm({
           autoComplete="off"
           maxLength={100}
           aria-describedby="product-search-status"
-          placeholder="Search by product name or SKU"
+          placeholder="Search by product name or product code"
           className="min-h-11 w-full rounded border border-neutral-300 px-3 text-sm"
         />
         <div id="product-search-status" aria-live="polite" className="mt-1 text-xs text-neutral-600">

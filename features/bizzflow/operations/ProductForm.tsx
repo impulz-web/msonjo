@@ -32,7 +32,7 @@ export default function ProductForm({ product, initialOperationKey = '' }: { pro
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
-          <label htmlFor="sku" className="mb-1 block text-sm font-medium">SKU <span className="font-normal text-neutral-600">Optional</span></label>
+          <label htmlFor="sku" className="mb-1 block text-sm font-medium">Product code <span className="font-normal text-neutral-600">Optional</span></label>
           <input id="sku" name="sku" maxLength={100} defaultValue={product?.sku ?? ''}
             className="min-h-11 w-full rounded border border-neutral-300 px-3 text-sm focus-visible:outline-2 focus-visible:outline-[#E31E24]" />
         </div>

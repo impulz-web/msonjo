@@ -73,7 +73,7 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
         <>
           <form method="get" className="mb-5 grid gap-3 rounded border border-neutral-200 p-3 sm:grid-cols-2 lg:grid-cols-5">
             <div className="lg:col-span-2">
-              <label htmlFor="q" className="mb-1 block text-xs font-medium">Search name or SKU</label>
+              <label htmlFor="q" className="mb-1 block text-xs font-medium">Search name or product code</label>
               <input id="q" name="q" defaultValue={params.q} maxLength={100}
                 className="min-h-10 w-full rounded border border-neutral-300 px-3 text-sm" />
             </div>
@@ -118,7 +118,7 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
               <table className="w-full min-w-[740px] border-collapse text-left text-sm">
                 <thead className="bg-[#F5F5F5] text-xs font-medium uppercase tracking-wide text-neutral-600">
                   <tr>
-                    <th className="px-4 py-3">Product</th><th className="px-4 py-3">SKU</th>
+                    <th className="px-4 py-3">Product</th><th className="px-4 py-3">Product code</th>
                     <th className="px-4 py-3">Category</th><th className="px-4 py-3">Selling price</th>
                     <th className="px-4 py-3">Quantity</th>{canManage ? <th className="px-4 py-3">Stock value</th> : null}
                     <th className="px-4 py-3">Status</th>
