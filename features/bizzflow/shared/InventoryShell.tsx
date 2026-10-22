@@ -26,6 +26,10 @@ const navigation = [
 ];
 
 function isCurrentPage(pathname: string, href: string) {
+  if (href === '/sales') {
+    return pathname === href
+      || (/^\/sales\/[^/]+(?:\/edit)?$/.test(pathname) && pathname !== '/sales/new');
+  }
   return href === '/dashboard'
     ? pathname === href
     : pathname === href || pathname.startsWith(`${href}/`);
@@ -78,7 +82,7 @@ export default function InventoryShell({
                 aria-current={active ? 'page' : undefined}
                 className={`flex min-h-10 items-center gap-3 rounded px-3 text-sm no-underline ${
                   active
-                    ? 'bg-[#E31E24] font-semibold text-white'
+                    ? 'bg-[#E31E24] font-semibold !text-white hover:!text-white'
                     : 'text-neutral-700 hover:bg-neutral-100 hover:text-[#252525]'
                 }`}
               >
@@ -153,7 +157,7 @@ export default function InventoryShell({
                     onClick={() => setMobileNavigationOpen(false)}
                     className={`flex min-h-11 items-center gap-3 rounded px-3 text-sm no-underline ${
                       active
-                        ? 'bg-[#E31E24] font-semibold text-white'
+                        ? 'bg-[#E31E24] font-semibold !text-white hover:!text-white'
                         : 'text-neutral-700 hover:bg-neutral-100 hover:text-[#252525]'
                     }`}
                   >
