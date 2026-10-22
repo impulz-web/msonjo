@@ -100,11 +100,11 @@ export async function createManagedUserAction(
 
   const { error: membershipError } = await admin
     .from('business_members')
-    .insert({
+    .upsert({
       business_id: business.id,
       user_id: created.user.id,
       role,
-    });
+    }, { onConflict: 'business_id,user_id' });
 
   if (membershipError) {
     const { error: deleteError } = await admin.auth.admin.deleteUser(created.user.id);
@@ -120,6 +120,69 @@ export async function createManagedUserAction(
   return {
     success: `Created ${username}. The password is only available in this open form; it is not saved for later viewing.`,
   };
+}
+
+export async function updateManagedUserRoleAction(
+  _state: AdminFormState,
+  formData: FormData,
+): Promise<AdminFormState> {
+  await requireMsonjoAdmin();
+
+  const userId = field(formData, 'user_id');
+  const role = field(formData, 'role');
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(userId)) {
+    return { error: 'Choose a valid MSONJO account.' };
+  }
+  if (!isMembershipRole(role)) {
+    return { error: 'Choose a valid inventory role.' };
+  }
+
+  const admin = createSupabaseAdminClient();
+  const { data: business, error: businessError } = await admin
+    .from('businesses')
+    .select('id')
+    .eq('slug', 'msonjo-gas-house-hold')
+    .maybeSingle();
+  if (businessError || !business) {
+    return { error: 'The MSONJO business could not be loaded. Verify the database migration.' };
+  }
+
+  const { data: membership, error: membershipError } = await admin
+    .from('business_members')
+    .select('user_id, role')
+    .eq('business_id', business.id)
+    .eq('user_id', userId)
+    .maybeSingle();
+  if (membershipError || !membership) {
+    return { error: 'That account is not an authorized MSONJO user.' };
+  }
+
+  if (membership.role === 'owner' && role !== 'owner') {
+    const { count, error: ownersError } = await admin
+      .from('business_members')
+      .select('user_id', { count: 'exact', head: true })
+      .eq('business_id', business.id)
+      .eq('role', 'owner');
+
+    if (ownersError) {
+      return { error: 'Unable to verify MSONJO owner access. Try again.' };
+    }
+    if (count === 1) {
+      return { error: 'Assign another user as owner before changing the last owner’s role.' };
+    }
+  }
+
+  const { error: updateError } = await admin
+    .from('business_members')
+    .update({ role })
+    .eq('business_id', business.id)
+    .eq('user_id', userId);
+  if (updateError) {
+    return { error: 'The inventory role could not be updated.' };
+  }
+
+  revalidatePath('/staff');
+  return { success: 'Inventory role updated.' };
 }
 
 export async function updateManagedUserContactEmailAction(

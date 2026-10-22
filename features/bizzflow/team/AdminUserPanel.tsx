@@ -1,11 +1,12 @@
 'use client';
 
-import { Eye, EyeOff, KeyRound, UserPlus } from 'lucide-react';
+import { Eye, EyeOff, KeyRound, Save, UserPlus } from 'lucide-react';
 import { useActionState, useState } from 'react';
 import {
   createManagedUserAction,
   resetManagedUserPasswordAction,
   updateManagedUserContactEmailAction,
+  updateManagedUserRoleAction,
 } from '@/app/admin-actions';
 
 type FormState = {
@@ -18,7 +19,8 @@ type ManagedUser = {
   name: string;
   username: string;
   contactEmail: string;
-  role: string;
+  authEmail: string;
+  role: 'owner' | 'manager' | 'attendant';
 };
 
 function PasswordInput({
@@ -198,6 +200,47 @@ function ContactEmailForm({
   );
 }
 
+function InventoryRoleForm({
+  userId,
+  role,
+}: {
+  userId: string;
+  role: ManagedUser['role'];
+}) {
+  const [state, formAction, pending] = useActionState<FormState, FormData>(
+    updateManagedUserRoleAction,
+    {},
+  );
+
+  return (
+    <form action={formAction} className="mt-3 grid gap-3 sm:grid-cols-[1fr_auto]">
+      <input type="hidden" name="user_id" value={userId} />
+      <label className="block text-xs font-medium text-[#252525]">
+        Inventory role
+        <select
+          name="role"
+          defaultValue={role}
+          className="mt-1 min-h-11 w-full rounded border border-neutral-300 bg-white px-3 text-sm text-[#252525] focus:border-[#E31E24] focus:outline-none focus:ring-1 focus:ring-[#E31E24]"
+        >
+          <option value="attendant">Attendant</option>
+          <option value="manager">Manager</option>
+          <option value="owner">Owner</option>
+        </select>
+      </label>
+      <button
+        type="submit"
+        disabled={pending}
+        className="mt-auto inline-flex min-h-11 items-center justify-center gap-2 rounded bg-[#E31E24] px-4 text-sm font-medium !text-white hover:!text-white disabled:!text-white disabled:opacity-60"
+      >
+        <Save aria-hidden="true" className="size-4" />
+        {pending ? 'Saving…' : 'Save role'}
+      </button>
+      {state.error ? <p role="alert" className="text-sm text-red-700 sm:col-span-2">{state.error}</p> : null}
+      {state.success ? <p role="status" className="rounded bg-[#FFD600] p-3 text-sm text-[#252525] sm:col-span-2">{state.success}</p> : null}
+    </form>
+  );
+}
+
 function ResetPasswordForm({ userId }: { userId: string }) {
   const [state, formAction, pending] = useActionState<FormState, FormData>(
     resetManagedUserPasswordAction,
@@ -266,8 +309,14 @@ export default function AdminUserPanel({ users }: { users: ManagedUser[] }) {
                     <p className="mt-1 text-sm text-neutral-600">
                       Contact email: {user.contactEmail || 'Not set'}
                     </p>
+                    {user.authEmail ? (
+                      <p className="mt-1 text-sm text-neutral-600">
+                        Supabase Auth: {user.authEmail}
+                      </p>
+                    ) : null}
                   </div>
                 </div>
+                <InventoryRoleForm userId={user.id} role={user.role} />
                 <ContactEmailForm userId={user.id} contactEmail={user.contactEmail} />
                 <ResetPasswordForm userId={user.id} />
               </li>

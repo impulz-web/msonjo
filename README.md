@@ -45,6 +45,7 @@ database before applying migrations. Apply the files in
 3. `20261019010000_bizzflow_sale_payments_edits_and_daily_reports.sql`
 4. `20261019020000_bizzflow_typed_manual_sale_items.sql`
 5. `20261020000000_msonjo_single_business.sql`
+6. `20261021000000_auth_user_membership_and_role_management.sql`
 
 The final migration renames the existing sole business to MSONJO while
 preserving its business ID and related product, sale, and stock records. On a
@@ -61,6 +62,14 @@ These migrations are versioned SQL files; running this application does not
 apply them. Confirm the Supabase project reference before using the Supabase
 CLI or SQL editor. The migration state must be checked in the target project;
 no remote database migration is claimed here.
+
+The final migration adds an Auth trigger: each user created in Supabase Auth
+is automatically added to the MSONJO business with the `attendant` inventory
+role. It also adds existing Auth users who do not already have MSONJO
+membership. An administrator can change each user's inventory role from the
+User administration page. The inventory role is separate from
+`app_metadata.role = 'admin'`, which controls access to user administration.
+Dashboard-created users keep the role selected during creation.
 
 ### Initial administrator and staff accounts
 

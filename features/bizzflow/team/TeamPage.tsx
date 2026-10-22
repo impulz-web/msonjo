@@ -39,11 +39,14 @@ export default async function TeamPage() {
     memberships.map((membership) => [membership.user_id, membership.role]),
   );
   const users = authUsers.flatMap((user) => {
-    const username = user.app_metadata.username;
     const role = rolesByUserId.get(user.id);
-    if (typeof username !== 'string' || !role) {
+    if (!role) {
       return [];
     }
+    const metadataUsername = user.app_metadata.username;
+    const username = typeof metadataUsername === 'string'
+      ? metadataUsername
+      : user.email?.split('@')[0] ?? user.id;
     const metadataName = user.user_metadata.name;
     return [{
       id: user.id,
@@ -52,6 +55,7 @@ export default async function TeamPage() {
       contactEmail: typeof user.user_metadata.contact_email === 'string'
         ? user.user_metadata.contact_email
         : '',
+      authEmail: user.email ?? '',
       role,
     }];
   }).sort((left, right) => left.username.localeCompare(right.username));

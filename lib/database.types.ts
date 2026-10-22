@@ -45,7 +45,9 @@ export type Database = {
           id?: string;
           created_at?: string;
         };
-        Update: never;
+        Update: {
+          role?: 'owner' | 'manager' | 'attendant';
+        };
         Relationships: [];
       };
       products: {
