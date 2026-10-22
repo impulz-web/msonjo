@@ -70,6 +70,14 @@ export default async function ReportsPage({ searchParams }: { searchParams: Repo
         </> : null}
         <button className="min-h-10 rounded bg-[#E31E24] px-4 text-sm font-medium !text-white hover:!text-white">Run report</button>
         <p className="text-xs text-neutral-600">Date range: {startDate} inclusive to {endDate} exclusive</p>
+        {!dateError ? (
+          <Link
+            href={`/reports/pdf?from=${startDate}&to=${addCalendarDays(endDate, -1)}`}
+            className="inline-flex min-h-10 items-center rounded bg-[#E31E24] px-4 text-sm font-medium !text-white hover:!text-white"
+          >
+            Download period PDF
+          </Link>
+        ) : null}
       </form>
 
       {error || !report ? (

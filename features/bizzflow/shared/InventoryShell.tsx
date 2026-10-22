@@ -39,12 +39,12 @@ export default function InventoryShell({
   children,
   activeBusinessName,
   userEmail,
-  isAdmin,
+  canManageUsers,
 }: Readonly<{
   children: React.ReactNode;
   activeBusinessName: string;
   userEmail: string;
-  isAdmin: boolean;
+  canManageUsers: boolean;
 }>) {
   const pathname = usePathname();
   const [mobileNavigationOpen, setMobileNavigationOpen] = useState(false);
@@ -70,8 +70,8 @@ export default function InventoryShell({
           </span>
         </Link>
         <nav aria-label="Inventory navigation" className="flex-1 space-y-1 p-3">
-          {[...navigation, ...(isAdmin
-            ? [{ label: 'User administration', href: '/staff', icon: Users }]
+          {[...navigation, ...(canManageUsers
+            ? [{ label: 'Staff & users', href: '/staff', icon: Users }]
             : [])].map(({ label, href, icon: Icon }) => {
             const active = isCurrentPage(pathname, href);
 
@@ -144,8 +144,8 @@ export default function InventoryShell({
             className="inventory-mobile-nav border-t border-neutral-200 bg-white p-3 md:hidden"
           >
             <div className="space-y-1">
-              {[...navigation, ...(isAdmin
-                ? [{ label: 'User administration', href: '/staff', icon: Users }]
+              {[...navigation, ...(canManageUsers
+                ? [{ label: 'Staff & users', href: '/staff', icon: Users }]
                 : [])].map(({ label, href, icon: Icon }) => {
                 const active = isCurrentPage(pathname, href);
 

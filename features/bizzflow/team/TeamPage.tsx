@@ -63,8 +63,8 @@ export default async function TeamPage() {
   return (
     <>
       <InventoryPageHeader
-        title="User administration"
-        description="Create MSONJO sign-in accounts and assign inventory roles. Only Supabase Auth admins can manage users here."
+        title="Staff and user management"
+        description="Create username-and-password accounts for MSONJO managers and attendants. The business owner can manage staff access here."
       />
       <AdminUserPanel users={users} />
     </>

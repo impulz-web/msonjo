@@ -138,7 +138,6 @@ function CreateUserForm() {
         >
           <option value="attendant">Attendant</option>
           <option value="manager">Manager</option>
-          <option value="owner">Owner</option>
         </select>
       </label>
       {state.error ? <p role="alert" className="text-sm text-red-700 sm:col-span-2">{state.error}</p> : null}
@@ -283,7 +282,7 @@ export default function AdminUserPanel({ users }: { users: ManagedUser[] }) {
         <div>
           <h2 id="create-user-heading" className="text-base font-semibold text-[#252525]">Create a user</h2>
           <p className="mt-1 text-sm text-neutral-600">
-            Set the user’s name, username, optional contact email, password, and inventory permissions.
+            Set the user’s name, username, optional contact email, password, and choose manager or attendant access.
           </p>
         </div>
         <CreateUserForm />

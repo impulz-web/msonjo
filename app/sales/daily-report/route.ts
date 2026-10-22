@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getActiveBusinessContext } from '@/lib/bizzflow/context';
 import { jsonNumber, jsonObject, jsonString } from '@/lib/bizzflow/operations-data';
+import { createBrandedPdf } from '@/lib/bizzflow/pdf';
 
 export const runtime = 'nodejs';
 
@@ -15,52 +16,11 @@ type PdfSale = {
   customer_phone: string;
 };
 
-function safeText(value: string) {
-  return value.normalize('NFKD').replace(/[^\x20-\x7E]/g, '').replace(/([\\()])/g, '\\$1');
-}
-
 function kes(value: number) {
   return `KES ${new Intl.NumberFormat('en-KE', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(value)}`;
-}
-
-function textCommand(value: string, x: number, y: number, size = 9, color = '0 0 0') {
-  return `BT /F1 ${size} Tf ${color} rg ${x} ${y} Td (${safeText(value)}) Tj ET\n`;
-}
-
-function makePdf(pages: string[]) {
-  const pageIds = pages.map((_, index) => 3 + index * 2);
-  const fontId = 3 + pages.length * 2;
-  const objects: string[] = [
-    '<< /Type /Catalog /Pages 2 0 R >>',
-    `<< /Type /Pages /Kids [${pageIds.map((id) => `${id} 0 R`).join(' ')}] /Count ${pages.length} >>`,
-  ];
-
-  pages.forEach((content, index) => {
-    const pageId = 3 + index * 2;
-    const streamId = pageId + 1;
-    objects.push(
-      `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 ${fontId} 0 R >> >> /Contents ${streamId} 0 R >>`,
-      `<< /Length ${Buffer.byteLength(content, 'ascii')} >>\nstream\n${content}endstream`,
-    );
-  });
-  objects.push('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>');
-
-  let document = '%PDF-1.4\n';
-  const offsets = [0];
-  objects.forEach((object, index) => {
-    offsets.push(Buffer.byteLength(document, 'ascii'));
-    document += `${index + 1} 0 obj\n${object}\nendobj\n`;
-  });
-  const xrefOffset = Buffer.byteLength(document, 'ascii');
-  document += `xref\n0 ${objects.length + 1}\n0000000000 65535 f \n`;
-  for (const offset of offsets.slice(1)) {
-    document += `${String(offset).padStart(10, '0')} 00000 n \n`;
-  }
-  document += `trailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xrefOffset}\n%%EOF`;
-  return Buffer.from(document, 'ascii');
 }
 
 function saleRows(value: unknown): PdfSale[] {
@@ -95,62 +55,26 @@ function buildDailyReportPdf(businessName: string, date: string, sales: PdfSale[
     year: 'numeric',
     timeZone: 'Africa/Nairobi',
   }).format(new Date(`${date}T12:00:00+03:00`));
-  const pages: string[] = [];
-  let content = '';
-  let y = 0;
-
-  const startPage = (continued: boolean) => {
-    content = '';
-    content += textCommand(businessName, 40, 802, 17, '0 0 0');
-    content += textCommand('DAILY SALES REPORT', 40, 778, 10, '0.06 0.46 0.43');
-    content += textCommand(`${dayName}${continued ? ' (continued)' : ''}`, 40, 759, 9, '0.25 0.25 0.25');
-    if (!continued) {
-      content += textCommand(`Sales: ${sales.length}   Total: ${kes(total)}   Paid: ${kes(paid)}   Due: ${kes(outstanding)}`, 40, 735, 9, '0 0 0');
-    }
-    content += '0.06 0.46 0.43 RG 40 722 m 555 722 l S\n';
-    content += textCommand('Time', 40, 704, 8, '0.25 0.25 0.25');
-    content += textCommand('Sale', 91, 704, 8, '0.25 0.25 0.25');
-    content += textCommand('Customer', 144, 704, 8, '0.25 0.25 0.25');
-    content += textCommand('Payment', 252, 704, 8, '0.25 0.25 0.25');
-    content += textCommand('Total', 323, 704, 8, '0.25 0.25 0.25');
-    content += textCommand('Paid', 398, 704, 8, '0.25 0.25 0.25');
-    content += textCommand('Due', 472, 704, 8, '0.25 0.25 0.25');
-    content += '0.8 0.8 0.8 RG 40 696 m 555 696 l S\n';
-    y = 680;
-  };
-
-  startPage(false);
-  for (const sale of sales) {
-    if (y < 55) {
-      content += textCommand('Powered by HWS', 40, 28, 8, '0.25 0.25 0.25');
-      pages.push(content);
-      startPage(true);
-    }
-    const time = new Intl.DateTimeFormat('en-KE', {
-      timeStyle: 'short',
-      timeZone: 'Africa/Nairobi',
-    }).format(new Date(sale.created_at));
-    const customer = sale.customer_name === '—'
-      ? '—'
-      : `${sale.customer_name} ${sale.customer_phone}`.slice(0, 19);
-    const status = sale.balance_due <= 0 ? 'Paid' : sale.amount_paid > 0 ? 'Part paid' : 'Credit';
-    content += textCommand(time, 40, y, 8);
-    content += textCommand(sale.id.slice(0, 8), 91, y, 8);
-    content += textCommand(customer, 144, y, 8);
-    content += textCommand(`${status} / ${sale.payment_method}`.slice(0, 19), 252, y, 7);
-    content += textCommand(kes(sale.total_amount), 323, y, 8);
-    content += textCommand(kes(sale.amount_paid), 398, y, 8);
-    content += textCommand(kes(sale.balance_due), 472, y, 8);
-    content += '0.88 0.88 0.88 RG 40 ';
-    content += `${y - 6} m 555 ${y - 6} l S\n`;
-    y -= 19;
-  }
-  if (!sales.length) {
-    content += textCommand('No sales recorded for this day.', 40, y, 9, '0.3 0.3 0.3');
-  }
-  content += textCommand('Powered by HWS', 40, 28, 8, '0.25 0.25 0.25');
-  pages.push(content);
-  return makePdf(pages);
+  const lines = [
+    `Transactions: ${sales.length}  |  Total: ${kes(total)}  |  Paid: ${kes(paid)}  |  Due: ${kes(outstanding)}`,
+    '',
+    'SALES DETAILS',
+    ...sales.flatMap((sale) => {
+      const time = new Intl.DateTimeFormat('en-KE', {
+        timeStyle: 'short',
+        timeZone: 'Africa/Nairobi',
+      }).format(new Date(sale.created_at));
+      const customer = sale.customer_name === '—'
+        ? 'Walk-in customer'
+        : `${sale.customer_name} ${sale.customer_phone}`.trim();
+      return [
+        `${time}  |  Sale ${sale.id.slice(0, 8)}  |  ${customer.slice(0, 45)}  |  ${sale.payment_method.slice(0, 16)}`,
+        `    Total ${kes(sale.total_amount)}  |  Paid ${kes(sale.amount_paid)}  |  Due ${kes(sale.balance_due)}`,
+      ];
+    }),
+    ...(!sales.length ? ['No sales recorded for this day.'] : []),
+  ];
+  return createBrandedPdf(businessName, 'Daily Sales Report', dayName, lines);
 }
 
 export async function GET(request: Request) {

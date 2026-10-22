@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import InventoryPageHeader from '../shared/InventoryPageHeader';
+import MonthSalesFilter from './MonthSalesFilter';
 import { getActiveBusinessContext } from '@/lib/bizzflow/context';
 import { formatKes, getNairobiDate, jsonNumber, jsonObject, jsonString } from '@/lib/bizzflow/operations-data';
 
@@ -56,12 +57,22 @@ export default async function SalesPage({ searchParams }: { searchParams: SaleSe
         description={`Sales and payments for ${business.name}.`}
         action={{ label: 'Add sale', href: '/sales/new' }}
       />
-      <form method="get" className="mb-5 flex flex-wrap items-end gap-3 rounded border border-neutral-200 p-3">
+      <MonthSalesFilter month={selectedMonth} />
+      <form action="/sales/daily-report" method="get" className="mb-5 flex flex-wrap items-end gap-3 rounded border border-neutral-200 p-3">
         <div>
-          <label htmlFor="month" className="mb-1 block text-xs font-medium">Choose month</label>
-          <input id="month" name="month" type="month" value={selectedMonth} className="min-h-10 rounded border border-neutral-300 px-2 text-sm" />
+          <label htmlFor="sales-report-date" className="mb-1 block text-xs font-medium">Daily sales PDF</label>
+          <input
+            id="sales-report-date"
+            name="date"
+            type="date"
+            defaultValue={today}
+            required
+            className="min-h-10 rounded border border-neutral-300 px-2 text-sm"
+          />
         </div>
-        <button className="min-h-10 rounded bg-[#E31E24] px-4 text-sm font-medium !text-white hover:!text-white">View sales</button>
+        <button className="min-h-10 rounded bg-[#E31E24] px-4 text-sm font-medium !text-white hover:!text-white">
+          Download daily PDF
+        </button>
       </form>
 
       {error ? (
@@ -143,7 +154,7 @@ export default async function SalesPage({ searchParams }: { searchParams: SaleSe
                   {!sales.length ? (
                     <tr>
                       <td colSpan={9} className="px-4 py-8 text-center text-neutral-600">
-                        No sales recorded for this month.
+                        Sales not available for this month.
                       </td>
                     </tr>
                   ) : null}

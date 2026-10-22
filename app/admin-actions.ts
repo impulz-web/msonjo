@@ -35,6 +35,10 @@ function isMembershipRole(value: string): value is 'owner' | 'manager' | 'attend
   return value === 'owner' || value === 'manager' || value === 'attendant';
 }
 
+function isCreatableStaffRole(value: string): value is 'manager' | 'attendant' {
+  return value === 'manager' || value === 'attendant';
+}
+
 export async function createManagedUserAction(
   _state: AdminFormState,
   formData: FormData,
@@ -59,8 +63,8 @@ export async function createManagedUserAction(
   if (!validPassword(password)) {
     return { error: 'Use a password between 12 and 72 characters.' };
   }
-  if (!isMembershipRole(role)) {
-    return { error: 'Choose a valid inventory role.' };
+  if (!isCreatableStaffRole(role)) {
+    return { error: 'Choose manager or attendant for a new staff account.' };
   }
 
   const supabaseUrl = process.env.MSONJO_SUPABASE_URL;

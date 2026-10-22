@@ -34,6 +34,11 @@ Run `npm run typecheck`, `npm run lint`, and `npm run build` for local
 validation. Vercel can use its standard Next.js build detection and `npm run
 build`; `npm start` runs `next start` for local production-mode checks.
 
+The Sales page filters to the selected month and provides a dated daily-sales
+PDF. The Reports page can download a branded PDF for its selected day, week,
+month, or custom date range. PDF requests require an authenticated MSONJO
+member and use the same Supabase access controls as the on-screen reports.
+
 ## Supabase database setup and migration
 
 Use a dedicated Supabase project for MSONJO. Review and back up that project's
@@ -66,10 +71,11 @@ no remote database migration is claimed here.
 The final migration adds an Auth trigger: each user created in Supabase Auth
 is automatically added to the MSONJO business with the `attendant` inventory
 role. It also adds existing Auth users who do not already have MSONJO
-membership. An administrator can change each user's inventory role from the
-User administration page. The inventory role is separate from
-`app_metadata.role = 'admin'`, which controls access to user administration.
-Dashboard-created users keep the role selected during creation.
+membership. The MSONJO owner or a trusted Supabase Auth administrator can
+open **Staff and user management** to create username-and-password accounts
+for managers and attendants. The inventory role is separate from
+`app_metadata.role = 'admin'`; owners are authorized from their MSONJO
+membership, while the trusted Auth role also grants user-management access.
 
 ### Initial administrator and staff accounts
 
@@ -101,12 +107,14 @@ on conflict (business_id, user_id)
 do update set role = excluded.role;
 ```
 
-Only `app_metadata.role = 'admin'` grants access to User administration;
-user-editable `user_metadata` is never used for that check. Sign in with the
-admin username or the exact Supabase Auth email and password, then use **User administration** to create
-username/password accounts, optionally record a contact email, and assign
-their inventory role. Admins can view and update contact emails in the user
-list; these are stored as `user_metadata.contact_email` in Supabase Auth.
+The MSONJO owner membership or `app_metadata.role = 'admin'` grants access to
+Staff and user management; user-editable `user_metadata` is never used for the
+authorization check. Sign in with the owner username or exact Supabase Auth
+email and password, then use **Staff and user management** to create
+manager/attendant username-and-password accounts, optionally record a contact
+email, and manage staff roles. Owners and trusted Auth administrators can view
+and update contact emails in the user list; these are stored as
+`user_metadata.contact_email` in Supabase Auth.
 Changing a contact email does not change the generated Auth sign-in email, so
 username/password login continues to work and no email confirmation is sent.
 The admin secret is required for this page. Public account creation and

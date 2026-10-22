@@ -81,7 +81,7 @@ export default async function RootLayout({
             : typeof user.app_metadata.username === 'string'
               ? `@${user.app_metadata.username}`
               : 'Signed-in account'}
-          isAdmin={user.app_metadata.role === 'admin'}
+          canManageUsers={user.app_metadata.role === 'admin' || business.role === 'owner'}
         >
           {children}
         </InventoryShell>

@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation';
 import type { Database } from '@/lib/database.types';
 import { createSupabaseServerClient } from './server';
 import { getSupabaseConfig } from './config';
+import { getAuthorizedBusinesses } from '@/lib/bizzflow/businesses';
 
 function isServiceRoleKey(key: string) {
   if (key.startsWith('sb_secret_')) {
@@ -51,7 +52,12 @@ export async function requireMsonjoAdmin() {
   if (error || !user) {
     redirect('/login');
   }
-  if (user.app_metadata.role !== 'admin') {
+  if (user.app_metadata.role === 'admin') {
+    return user;
+  }
+
+  const businesses = await getAuthorizedBusinesses(supabase, user.id);
+  if (!businesses.some((business) => business.role === 'owner')) {
     redirect('/dashboard');
   }
 

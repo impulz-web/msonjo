@@ -22,8 +22,8 @@ export default async function SettingsPage() {
       <InventoryPageHeader
         title="Settings"
         description="Manage your account details and review your MSONJO workspace access."
-        action={user.app_metadata.role === 'admin'
-          ? { label: 'User administration', href: '/staff' }
+        action={user.app_metadata.role === 'admin' || business.role === 'owner'
+          ? { label: 'Staff & users', href: '/staff' }
           : undefined}
       />
 
@@ -58,12 +58,14 @@ export default async function SettingsPage() {
             <div className="flex flex-wrap justify-between gap-2 py-3">
               <dt className="text-neutral-600">User administration</dt>
               <dd className="font-medium text-[#252525]">
-                {user.app_metadata.role === 'admin' ? 'Administrator' : 'Not enabled'}
+                {user.app_metadata.role === 'admin'
+                  ? 'Administrator'
+                  : business.role === 'owner' ? 'Owner access' : 'Not enabled'}
               </dd>
             </div>
           </dl>
           <p className="mt-3 border-t border-neutral-200 pt-3 text-xs leading-5 text-neutral-600">
-            Workspace details and access roles are managed by the MSONJO administrator.
+            The MSONJO owner manages staff access and workspace roles.
           </p>
         </section>
       </div>
