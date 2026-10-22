@@ -49,6 +49,9 @@ export default async function TeamPage() {
       id: user.id,
       username,
       name: typeof metadataName === 'string' ? metadataName : username,
+      contactEmail: typeof user.user_metadata.contact_email === 'string'
+        ? user.user_metadata.contact_email
+        : '',
       role,
     }];
   }).sort((left, right) => left.username.localeCompare(right.username));

@@ -27,6 +27,10 @@ function validPassword(password: string) {
   return password.length >= 12 && password.length <= 72;
 }
 
+function validContactEmail(email: string) {
+  return email.length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
 function isMembershipRole(value: string): value is 'owner' | 'manager' | 'attendant' {
   return value === 'owner' || value === 'manager' || value === 'attendant';
 }
@@ -39,6 +43,7 @@ export async function createManagedUserAction(
 
   const username = field(formData, 'username').toLowerCase();
   const name = field(formData, 'name');
+  const contactEmail = field(formData, 'contact_email').toLowerCase();
   const password = passwordField(formData, 'password');
   const role = field(formData, 'role');
 
@@ -47,6 +52,9 @@ export async function createManagedUserAction(
   }
   if (name.length < 2 || name.length > 80) {
     return { error: 'Enter a name between 2 and 80 characters.' };
+  }
+  if (contactEmail && !validContactEmail(contactEmail)) {
+    return { error: 'Enter a valid contact email address.' };
   }
   if (!validPassword(password)) {
     return { error: 'Use a password between 12 and 72 characters.' };
@@ -75,7 +83,11 @@ export async function createManagedUserAction(
     email: getMsonjoAuthEmail(username, supabaseUrl),
     password,
     email_confirm: true,
-    user_metadata: { name, username },
+    user_metadata: {
+      name,
+      username,
+      ...(contactEmail ? { contact_email: contactEmail } : {}),
+    },
     app_metadata: { role: 'user', username },
   });
 
@@ -107,6 +119,65 @@ export async function createManagedUserAction(
   revalidatePath('/staff');
   return {
     success: `Created ${username}. The password is only available in this open form; it is not saved for later viewing.`,
+  };
+}
+
+export async function updateManagedUserContactEmailAction(
+  _state: AdminFormState,
+  formData: FormData,
+): Promise<AdminFormState> {
+  await requireMsonjoAdmin();
+
+  const userId = field(formData, 'user_id');
+  const contactEmail = field(formData, 'contact_email').toLowerCase();
+
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(userId)) {
+    return { error: 'Choose a valid MSONJO account.' };
+  }
+  if (contactEmail && !validContactEmail(contactEmail)) {
+    return { error: 'Enter a valid contact email address.' };
+  }
+
+  const admin = createSupabaseAdminClient();
+  const { data: business, error: businessError } = await admin
+    .from('businesses')
+    .select('id')
+    .eq('slug', 'msonjo-gas-house-hold')
+    .maybeSingle();
+  if (businessError || !business) {
+    return { error: 'The MSONJO business could not be loaded. Verify the database migration.' };
+  }
+
+  const { data: membership, error: membershipError } = await admin
+    .from('business_members')
+    .select('user_id')
+    .eq('business_id', business.id)
+    .eq('user_id', userId)
+    .maybeSingle();
+  if (membershipError || !membership) {
+    return { error: 'That account is not an authorized MSONJO user.' };
+  }
+
+  const { data: authUser, error: authUserError } = await admin.auth.admin.getUserById(userId);
+  if (authUserError || !authUser.user) {
+    return { error: 'Unable to load that user’s Supabase Auth profile.' };
+  }
+
+  const { error: updateError } = await admin.auth.admin.updateUserById(userId, {
+    user_metadata: {
+      ...authUser.user.user_metadata,
+      contact_email: contactEmail,
+    },
+  });
+  if (updateError) {
+    return { error: 'The contact email could not be saved to Supabase Auth.' };
+  }
+
+  revalidatePath('/staff');
+  return {
+    success: contactEmail
+      ? 'Contact email updated in Supabase Auth user metadata. Username sign-in is unchanged.'
+      : 'Contact email removed from Supabase Auth user metadata.',
   };
 }
 

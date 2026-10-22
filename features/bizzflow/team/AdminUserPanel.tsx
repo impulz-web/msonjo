@@ -5,6 +5,7 @@ import { useActionState, useState } from 'react';
 import {
   createManagedUserAction,
   resetManagedUserPasswordAction,
+  updateManagedUserContactEmailAction,
 } from '@/app/admin-actions';
 
 type FormState = {
@@ -16,6 +17,7 @@ type ManagedUser = {
   id: string;
   name: string;
   username: string;
+  contactEmail: string;
   role: string;
 };
 
@@ -99,6 +101,19 @@ function CreateUserForm() {
         </span>
       </label>
       <label className="block text-sm font-medium text-[#252525]">
+        Contact email (optional)
+        <input
+          name="contact_email"
+          type="email"
+          autoComplete="email"
+          maxLength={254}
+          className="mt-1 min-h-11 w-full rounded border border-neutral-300 bg-white px-3 text-sm text-[#252525] focus:border-[#E31E24] focus:outline-none focus:ring-1 focus:ring-[#E31E24]"
+        />
+        <span className="mt-1 block text-xs font-normal text-neutral-600">
+          Stored on the Supabase Auth profile; username sign-in does not change.
+        </span>
+      </label>
+      <label className="block text-sm font-medium text-[#252525]">
         Initial password
         <div className="mt-1">
           <PasswordInput
@@ -136,6 +151,49 @@ function CreateUserForm() {
           {pending ? 'Creating account…' : 'Create user'}
         </button>
       </div>
+    </form>
+  );
+}
+
+function ContactEmailForm({
+  userId,
+  contactEmail,
+}: {
+  userId: string;
+  contactEmail: string;
+}) {
+  const [state, formAction, pending] = useActionState<FormState, FormData>(
+    updateManagedUserContactEmailAction,
+    {},
+  );
+
+  return (
+    <form action={formAction} className="mt-3 grid gap-3 sm:grid-cols-[1fr_auto]">
+      <input type="hidden" name="user_id" value={userId} />
+      <label className="block text-xs font-medium text-[#252525]">
+        Contact email
+        <input
+          name="contact_email"
+          type="email"
+          autoComplete="email"
+          maxLength={254}
+          defaultValue={contactEmail}
+          aria-describedby={`contact-email-help-${userId}`}
+          className="mt-1 min-h-11 w-full rounded border border-neutral-300 bg-white px-3 text-sm text-[#252525] focus:border-[#E31E24] focus:outline-none focus:ring-1 focus:ring-[#E31E24]"
+        />
+        <span id={`contact-email-help-${userId}`} className="mt-1 block font-normal text-neutral-600">
+          Leave blank to remove. This does not change username sign-in.
+        </span>
+      </label>
+      <button
+        type="submit"
+        disabled={pending}
+        className="mt-auto inline-flex min-h-11 items-center justify-center rounded bg-[#E31E24] px-4 text-sm font-medium !text-white hover:!text-white disabled:!text-white disabled:opacity-60"
+      >
+        {pending ? 'Saving…' : 'Save contact email'}
+      </button>
+      {state.error ? <p role="alert" className="text-sm text-red-700 sm:col-span-2">{state.error}</p> : null}
+      {state.success ? <p role="status" className="rounded bg-[#FFD600] p-3 text-sm text-[#252525] sm:col-span-2">{state.success}</p> : null}
     </form>
   );
 }
@@ -182,7 +240,7 @@ export default function AdminUserPanel({ users }: { users: ManagedUser[] }) {
         <div>
           <h2 id="create-user-heading" className="text-base font-semibold text-[#252525]">Create a user</h2>
           <p className="mt-1 text-sm text-neutral-600">
-            Set the user’s name, username, password, and inventory permissions.
+            Set the user’s name, username, optional contact email, password, and inventory permissions.
           </p>
         </div>
         <CreateUserForm />
@@ -192,7 +250,7 @@ export default function AdminUserPanel({ users }: { users: ManagedUser[] }) {
         <div>
           <h2 id="users-heading" className="text-base font-semibold text-[#252525]">MSONJO users</h2>
           <p className="mt-1 text-sm text-neutral-600">
-            Reset a password if a user forgets it. Existing passwords cannot be viewed.
+            View and update contact emails, or reset a password if a user forgets it. Existing passwords cannot be viewed.
           </p>
         </div>
         {users.length ? (
@@ -205,8 +263,12 @@ export default function AdminUserPanel({ users }: { users: ManagedUser[] }) {
                     <p className="mt-1 text-sm text-neutral-600">
                       @{user.username} · {user.role}
                     </p>
+                    <p className="mt-1 text-sm text-neutral-600">
+                      Contact email: {user.contactEmail || 'Not set'}
+                    </p>
                   </div>
                 </div>
+                <ContactEmailForm userId={user.id} contactEmail={user.contactEmail} />
                 <ResetPasswordForm userId={user.id} />
               </li>
             ))}
