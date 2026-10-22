@@ -19,10 +19,19 @@ export async function getAuthorizedBusinesses(
   supabase: SupabaseClient<Database>,
   userId: string,
 ): Promise<AuthorizedBusiness[]> {
-  const { data: memberships, error: membershipError } = await supabase
-    .from('business_members')
-    .select('business_id, role')
-    .eq('user_id', userId);
+  const [membershipResult, businessResult] = await Promise.all([
+    supabase
+      .from('business_members')
+      .select('business_id, role')
+      .eq('user_id', userId),
+    supabase
+      .from('businesses')
+      .select('id, name, slug')
+      .eq('slug', 'msonjo-gas-house-hold')
+      .maybeSingle(),
+  ]);
+  const { data: memberships, error: membershipError } = membershipResult;
+  const { data: business, error: businessesError } = businessResult;
 
   if (membershipError) {
     throw new BusinessAccessError(
@@ -34,26 +43,12 @@ export async function getAuthorizedBusinesses(
     return [];
   }
 
-  const { data: businesses, error: businessesError } = await supabase
-    .from('businesses')
-    .select('id, name, slug')
-    .in('id', memberships.map(({ business_id }) => business_id))
-    .eq('slug', 'msonjo-gas-house-hold');
-
   if (businessesError) {
     throw new BusinessAccessError('Unable to load authorized businesses.');
   }
 
-  const rolesByBusiness = new Map(
-    memberships.map(({ business_id, role }) => [business_id, role]),
-  );
+  if (!business) return [];
 
-  return businesses.flatMap((business) => {
-    const role = rolesByBusiness.get(business.id);
-    if (!role) {
-      return [];
-    }
-
-    return [{ ...business, role }];
-  });
+  const membership = memberships.find(({ business_id }) => business_id === business.id);
+  return membership ? [{ ...business, role: membership.role }] : [];
 }
