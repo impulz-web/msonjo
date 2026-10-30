@@ -63,7 +63,9 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
         description="Search and manage product details and current stock."
         action={{ label: 'Add product', href: '/products/new' }}
       />
-      {searchParams.notice === 'deleted' ? <p role="status" className="mb-4 rounded border border-neutral-200 bg-[#F5F5F5] p-3 text-sm">Product removed from active inventory. Historical sales and stock records were preserved.</p> : null}
+      {searchParams.notice === 'deleted' ? <p role="status" className="mb-4 rounded border border-neutral-200 bg-[#F5F5F5] p-3 text-sm">Product permanently deleted.</p> : null}
+      {searchParams.notice === 'delete-history' ? <p role="alert" className="mb-4 rounded border border-neutral-200 bg-[#F5F5F5] p-3 text-sm">This product has sales or stock history and cannot be permanently deleted. Archive it to remove it from active inventory while preserving its records.</p> : null}
+      {searchParams.notice === 'delete-error' ? <p role="alert" className="mb-4 rounded border border-neutral-200 bg-[#F5F5F5] p-3 text-sm">Product could not be deleted. Refresh the product list and try again.</p> : null}
       {searchParams.notice === 'archived' ? <p role="status" className="mb-4 rounded border border-neutral-200 bg-[#F5F5F5] p-3 text-sm">Product archived. Existing sales and stock history were preserved.</p> : null}
       {searchParams.notice === 'archive-error' ? <p role="alert" className="mb-4 rounded border border-neutral-200 bg-[#F5F5F5] p-3 text-sm">Product could not be archived. Refresh the product list and try again.</p> : null}
       {error ? (

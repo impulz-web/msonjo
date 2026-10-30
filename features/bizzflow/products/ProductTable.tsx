@@ -4,7 +4,10 @@ import { ChevronDown, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 import { formatKes, type ProductRow } from '@/lib/bizzflow/operations-data';
-import { deleteProductAction } from '@/features/bizzflow/operations/actions';
+import {
+  archiveProductAction,
+  deleteProductAction,
+} from '@/features/bizzflow/operations/actions';
 
 function stockStatus(product: ProductRow) {
   if (product.is_archived) return 'Archived';
@@ -152,12 +155,23 @@ function FragmentRows({
           </button>
         </td>
         <td className="px-3 py-2 text-right">
-          {!product.is_archived ? (
+          <div className="flex justify-end gap-1">
+            {!product.is_archived ? (
+              <form action={archiveProductAction}>
+                <input type="hidden" name="product_id" value={product.id} />
+                <button
+                  type="submit"
+                  className="inline-flex min-h-8 items-center rounded px-2 text-xs font-medium text-neutral-700 hover:bg-neutral-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#E31E24]"
+                >
+                  Archive
+                </button>
+              </form>
+            ) : null}
             <form
               action={deleteProductAction}
               onSubmit={(event) => {
                 if (!window.confirm(
-                  `Delete "${product.name}" from active inventory? It will be archived, and historical sales and stock records will be preserved.`,
+                  `Permanently delete "${product.name}"? This cannot be undone. Products with sales or stock history cannot be deleted; archive those instead.`,
                 )) {
                   event.preventDefault();
                 }
@@ -171,7 +185,7 @@ function FragmentRows({
                 Delete
               </button>
             </form>
-          ) : null}
+          </div>
         </td>
       </tr>
       {expanded ? (

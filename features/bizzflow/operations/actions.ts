@@ -180,7 +180,19 @@ export async function archiveProductAction(formData: FormData): Promise<void> {
 export async function deleteProductAction(formData: FormData): Promise<void> {
   const productId = read(formData, 'product_id');
   if (!/^[0-9a-f-]{36}$/i.test(productId)) redirect('/products');
-  if (!await archiveProductFromActiveInventory(productId)) redirect('/products?notice=archive-error');
+
+  const { supabase, business } = await getActiveBusinessContext();
+  const { data, error } = await supabase.from('products').delete()
+    .eq('business_id', business.id).eq('id', productId).select('id').maybeSingle();
+
+  if (error) {
+    redirect(error.code === '23503' ? '/products?notice=delete-history' : '/products?notice=delete-error');
+  }
+  if (!data) redirect('/products?notice=delete-error');
+
+  revalidatePath('/');
+  revalidatePath('/products');
+  revalidatePath(`/products/${productId}`);
   redirect('/products?notice=deleted');
 }
 
