@@ -22,7 +22,7 @@ export default async function SaleDetailPage({ params }: { params: Promise<{ id:
   const createdAt = jsonString(sale?.created_at);
   const createdBy = jsonString(sale?.created_by);
   const total = jsonNumber(sale?.total_amount);
-  if (!saleId || !createdAt || !createdBy || total === null) notFound();
+  if (!saleId || !createdAt || total === null) notFound();
   const items = Array.isArray(response?.items)
     ? response.items.map((item) => jsonObject(item)).filter((item): item is NonNullable<typeof item> => item !== null)
     : [];
@@ -50,7 +50,7 @@ export default async function SaleDetailPage({ params }: { params: Promise<{ id:
       <dl className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <div className="rounded border border-neutral-200 p-4"><dt className="text-xs text-neutral-600">Reference</dt><dd className="mt-1 break-all text-sm font-medium">{saleId}</dd></div>
         <div className="rounded border border-neutral-200 p-4"><dt className="text-xs text-neutral-600">Payment method</dt><dd className="mt-1 text-sm font-medium">{jsonString(sale?.payment_method) === 'mpesa' ? 'M-Pesa (manual record)' : jsonString(sale?.payment_method) ?? 'Not recorded'}</dd></div>
-        <div className="rounded border border-neutral-200 p-4"><dt className="text-xs text-neutral-600">Recorded by</dt><dd className="mt-1 text-sm font-medium">{createdBy === user.id ? 'You' : 'Staff member'}</dd></div>
+        <div className="rounded border border-neutral-200 p-4"><dt className="text-xs text-neutral-600">Recorded by</dt><dd className="mt-1 text-sm font-medium">{createdBy === user.id ? 'You' : createdBy ? 'Staff member' : 'Former staff member'}</dd></div>
         <div className="rounded border border-neutral-200 p-4"><dt className="text-xs text-neutral-600">Total paid / remaining</dt><dd className="mt-1 text-sm font-medium">{formatKes(amountPaid)} / {formatKes(balanceDue)}</dd></div>
       </dl>
       {account?.customer_name ? (
@@ -71,7 +71,7 @@ export default async function SaleDetailPage({ params }: { params: Promise<{ id:
       ) : null}
       <div className="overflow-x-auto rounded border border-neutral-200">
         <table className="w-full min-w-[600px] text-left text-sm">
-          <thead className="bg-[#F5F5F5] text-xs uppercase text-neutral-600"><tr><th className="px-4 py-3">Item</th><th className="px-4 py-3">Qty</th><th className="px-4 py-3">Unit price</th><th className="px-4 py-3">Subtotal</th>{business.role !== 'attendant' ? <th className="px-4 py-3">Cost at sale</th> : null}</tr></thead>
+          <thead className="bg-[#F5F5F5] text-xs uppercase text-neutral-600"><tr><th className="px-4 py-3">Item</th><th className="px-4 py-3">Qty</th><th className="px-4 py-3">Unit price</th><th className="px-4 py-3">Subtotal</th><th className="px-4 py-3">Cost at sale</th></tr></thead>
           <tbody>
             {items.map((item, index) => (
               <tr key={jsonString(item.product_id) ?? index} className="border-t border-neutral-200">
@@ -79,12 +79,12 @@ export default async function SaleDetailPage({ params }: { params: Promise<{ id:
                 <td className="px-4 py-3">{jsonNumber(item.quantity) ?? 0}</td>
                 <td className="px-4 py-3">{formatKes(jsonNumber(item.unit_price) ?? 0)}</td>
                 <td className="px-4 py-3">{formatKes(jsonNumber(item.subtotal) ?? 0)}</td>
-                {business.role !== 'attendant' ? <td className="px-4 py-3">{jsonNumber(item.unit_cost_snapshot) === null ? '—' : `${formatKes(jsonNumber(item.unit_cost_snapshot)!)} / unit`}</td> : null}
+                <td className="px-4 py-3">{jsonNumber(item.unit_cost_snapshot) === null ? '—' : `${formatKes(jsonNumber(item.unit_cost_snapshot)!)} / unit`}</td>
               </tr>
             ))}
-            {!items.length ? <tr><td colSpan={business.role !== 'attendant' ? 5 : 4} className="px-4 py-8 text-center text-neutral-600">No sale items found.</td></tr> : null}
+            {!items.length ? <tr><td colSpan={5} className="px-4 py-8 text-center text-neutral-600">No sale items found.</td></tr> : null}
           </tbody>
-          <tfoot><tr className="border-t border-neutral-200 font-semibold"><th colSpan={3} className="px-4 py-4 text-right">Sale total</th><td colSpan={business.role !== 'attendant' ? 2 : 1} className="px-4 py-4">{formatKes(total)}</td></tr></tfoot>
+          <tfoot><tr className="border-t border-neutral-200 font-semibold"><th colSpan={3} className="px-4 py-4 text-right">Sale total</th><td colSpan={2} className="px-4 py-4">{formatKes(total)}</td></tr></tfoot>
         </table>
       </div>
       <Link href="/sales" className="mt-5 inline-block text-sm text-[#E31E24] underline">Back to sales</Link>

@@ -1,9 +1,10 @@
 'use client';
 
-import { Eye, EyeOff, KeyRound, Save, UserPlus, Users } from 'lucide-react';
+import { Eye, EyeOff, KeyRound, Save, Trash2, UserPlus, Users } from 'lucide-react';
 import { useActionState, useState } from 'react';
 import {
   createManagedUserAction,
+  deleteManagedUserAction,
   resetManagedUserPasswordAction,
   updateManagedUserContactEmailAction,
   updateManagedUserRoleAction,
@@ -138,7 +139,11 @@ function CreateUserForm() {
         >
           <option value="attendant">Attendant</option>
           <option value="manager">Manager</option>
+          <option value="owner">Owner — full access</option>
         </select>
+        <span className="mt-1 block text-xs font-normal text-neutral-600">
+          All users can manage inventory and reports. Only owners can add users and manage user roles.
+        </span>
       </label>
       {state.error ? <p role="alert" className="text-sm text-red-700 sm:col-span-2">{state.error}</p> : null}
       {state.success ? <p role="status" className="rounded bg-[#FFD600] p-3 text-sm text-[#252525] sm:col-span-2">{state.success}</p> : null}
@@ -275,7 +280,45 @@ function ResetPasswordForm({ userId }: { userId: string }) {
   );
 }
 
-export default function AdminUserPanel({ users }: { users: ManagedUser[] }) {
+function DeleteUserForm({ userId, username }: { userId: string; username: string }) {
+  const [state, formAction, pending] = useActionState<FormState, FormData>(
+    deleteManagedUserAction,
+    {},
+  );
+
+  return (
+    <form
+      action={formAction}
+      className="mt-4 border-t border-neutral-200 pt-4"
+      onSubmit={(event) => {
+        if (!window.confirm(
+          `Delete @${username}? Their sign-in access will be removed. Historical sales and stock records stay, but their creator attribution will be cleared.`,
+        )) {
+          event.preventDefault();
+        }
+      }}
+    >
+      <input type="hidden" name="user_id" value={userId} />
+      <button
+        type="submit"
+        disabled={pending}
+        className="inline-flex min-h-10 items-center gap-2 rounded border border-red-300 px-3 text-sm font-medium text-red-700 hover:bg-red-50 disabled:opacity-60"
+      >
+        <Trash2 aria-hidden="true" className="size-4" />
+        {pending ? 'Deleting…' : 'Delete user'}
+      </button>
+      {state.error ? <p role="alert" className="mt-2 text-sm text-red-700">{state.error}</p> : null}
+    </form>
+  );
+}
+
+export default function AdminUserPanel({
+  users,
+  currentUserId,
+}: {
+  users: ManagedUser[];
+  currentUserId: string;
+}) {
   return (
     <div className="space-y-3">
       <details className="group rounded border border-neutral-200 bg-white">
@@ -283,7 +326,7 @@ export default function AdminUserPanel({ users }: { users: ManagedUser[] }) {
           <UserPlus aria-hidden="true" className="size-4 shrink-0 text-[#E31E24]" />
           <span className="flex-1">
             <span className="block text-sm font-semibold text-[#252525]">Add user</span>
-            <span className="mt-0.5 block text-xs text-neutral-600">Create a manager or attendant account</span>
+            <span className="mt-0.5 block text-xs text-neutral-600">Create an owner, manager, or attendant account</span>
           </span>
           <span aria-hidden="true" className="text-xl leading-none text-neutral-500 group-open:rotate-45">+</span>
         </summary>
@@ -330,6 +373,13 @@ export default function AdminUserPanel({ users }: { users: ManagedUser[] }) {
                       <InventoryRoleForm userId={user.id} role={user.role} />
                       <ContactEmailForm userId={user.id} contactEmail={user.contactEmail} />
                       <ResetPasswordForm userId={user.id} />
+                      {user.id !== currentUserId ? (
+                        <DeleteUserForm userId={user.id} username={user.username} />
+                      ) : (
+                        <p className="mt-4 border-t border-neutral-200 pt-4 text-xs text-neutral-600">
+                          You cannot delete the account you are currently using.
+                        </p>
+                      )}
                     </div>
                   </details>
                 </li>

@@ -2,6 +2,7 @@
 
 import {
   BarChart3,
+  Boxes,
   Home,
   Menu,
   Package,
@@ -19,6 +20,7 @@ import { signOutAction } from '@/app/actions';
 const navigation = [
   { label: 'Overview', href: '/dashboard', icon: Home },
   { label: 'Products', href: '/products', icon: Package },
+  { label: 'Stock activity', href: '/stock', icon: Boxes },
   { label: 'New sale', href: '/sales/new', icon: Plus },
   { label: 'Sales history', href: '/sales', icon: ShoppingCart },
   { label: 'Reports', href: '/reports', icon: BarChart3 },
@@ -40,11 +42,13 @@ export default function InventoryShell({
   activeBusinessName,
   userEmail,
   canManageUsers,
+  localPreview = false,
 }: Readonly<{
   children: React.ReactNode;
   activeBusinessName: string;
   userEmail: string;
   canManageUsers: boolean;
+  localPreview?: boolean;
 }>) {
   const pathname = usePathname();
   const [mobileNavigationOpen, setMobileNavigationOpen] = useState(false);
@@ -53,10 +57,13 @@ export default function InventoryShell({
       ? { label: 'Workspace setup', href: '/setup', icon: Settings }
       : undefined);
   const CurrentIcon = currentPage?.icon ?? Home;
+  const navItems = [...navigation, ...(canManageUsers && !localPreview
+    ? [{ label: 'Staff & users', href: '/staff', icon: Users }]
+    : [])];
 
   return (
     <div className="msonjo-app flex min-h-screen">
-      <aside className="hidden w-64 shrink-0 flex-col border-r border-neutral-200 bg-white md:flex">
+      <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-neutral-200 bg-white md:flex">
         <Link
           href="/dashboard"
           className="flex min-h-16 items-center gap-3 border-b border-neutral-200 px-5 text-[#252525] no-underline"
@@ -70,9 +77,7 @@ export default function InventoryShell({
           </span>
         </Link>
         <nav aria-label="Inventory navigation" className="flex-1 space-y-1 p-3">
-          {[...navigation, ...(canManageUsers
-            ? [{ label: 'Staff & users', href: '/staff', icon: Users }]
-            : [])].map(({ label, href, icon: Icon }) => {
+          {navItems.map(({ label, href, icon: Icon }) => {
             const active = isCurrentPage(pathname, href);
 
             return (
@@ -122,20 +127,22 @@ export default function InventoryShell({
                 </h1>
               </div>
             </div>
-            <div
-              aria-label="Account"
-              className="flex min-w-0 shrink-0 items-center gap-3 text-xs text-neutral-600 sm:text-sm"
-            >
-              <span className="hidden max-w-48 truncate sm:inline">{userEmail}</span>
-              <form action={signOutAction}>
-                <button
-                  type="submit"
-                  className="min-h-9 rounded border border-neutral-300 px-3 text-xs font-medium text-[#252525] hover:bg-neutral-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#E31E24]"
-                >
-                  Sign out
-                </button>
-              </form>
-            </div>
+            {!localPreview ? (
+              <div
+                aria-label="Account"
+                className="flex min-w-0 shrink-0 items-center gap-3 text-xs text-neutral-600 sm:text-sm"
+              >
+                <span className="hidden max-w-48 truncate sm:inline">{userEmail}</span>
+                <form action={signOutAction}>
+                  <button
+                    type="submit"
+                    className="min-h-9 rounded border border-neutral-300 px-3 text-xs font-medium text-[#252525] hover:bg-neutral-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#E31E24]"
+                  >
+                    Sign out
+                  </button>
+                </form>
+              </div>
+            ) : null}
           </div>
           <nav
             id="inventory-mobile-navigation"
@@ -144,9 +151,7 @@ export default function InventoryShell({
             className="inventory-mobile-nav border-t border-neutral-200 bg-white p-3 md:hidden"
           >
             <div className="space-y-1">
-              {[...navigation, ...(canManageUsers
-                ? [{ label: 'Staff & users', href: '/staff', icon: Users }]
-                : [])].map(({ label, href, icon: Icon }) => {
+              {navItems.map(({ label, href, icon: Icon }) => {
                 const active = isCurrentPage(pathname, href);
 
                 return (
@@ -169,8 +174,8 @@ export default function InventoryShell({
             </div>
           </nav>
         </header>
-        <main className="w-full flex-1 px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
-          <div className="mx-auto w-full max-w-6xl">{children}</div>
+        <main className="w-full flex-1 px-3 py-4 sm:px-6 sm:py-7 lg:px-8">
+          <div className="mx-auto w-full max-w-7xl">{children}</div>
         </main>
       </div>
     </div>

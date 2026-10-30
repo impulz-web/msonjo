@@ -89,7 +89,7 @@ export type Database = {
         Row: {
           id: string;
           business_id: string;
-          created_by: string;
+          created_by: string | null;
           total_amount: number;
           idempotency_key: string;
           payment_method: 'cash' | 'mpesa' | 'other' | null;
@@ -125,7 +125,7 @@ export type Database = {
           movement_type: 'sale' | 'restock' | 'adjustment' | 'return' | 'correction' | 'damaged' | 'lost';
           quantity_change: number;
           reason: string | null;
-          created_by: string;
+          created_by: string | null;
           sale_id: string | null;
           operation_key: string | null;
           request_payload: Json | null;
@@ -168,7 +168,7 @@ export type Database = {
           amount: number;
           payment_method: 'cash' | 'mpesa' | 'other';
           idempotency_key: string;
-          created_by: string;
+          created_by: string | null;
           created_at: string;
         };
         Insert: never;
@@ -181,7 +181,7 @@ export type Database = {
           business_id: string;
           sale_id: string;
           idempotency_key: string;
-          changed_by: string;
+          changed_by: string | null;
           before_total: number;
           after_total: number;
           request_payload: Json;

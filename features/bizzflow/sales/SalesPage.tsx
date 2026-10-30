@@ -24,7 +24,7 @@ export default async function SalesPage({ searchParams }: { searchParams: SaleSe
   const [year, month] = selectedMonth.split('-').map(Number);
   const startDate = `${selectedMonth}-01`;
   const endDate = `${selectedMonth}-${String(new Date(Date.UTC(year, month, 0)).getUTCDate()).padStart(2, '0')}`;
-  const { supabase, business, user } = await getActiveBusinessContext();
+  const { supabase, business } = await getActiveBusinessContext();
   const { data, error } = await supabase.rpc('get_daily_sales', {
     p_business_id: business.id,
     p_start_date: startDate,
@@ -46,6 +46,34 @@ export default async function SalesPage({ searchParams }: { searchParams: SaleSe
   }).sort((left, right) => (
     (jsonString(right.sale.created_at) ?? '').localeCompare(jsonString(left.sale.created_at) ?? '')
   ));
+  const saleIds = sales
+    .map(({ sale }) => jsonString(sale.id))
+    .filter((saleId): saleId is string => saleId !== null);
+  const { data: saleItems, error: saleItemsError } = saleIds.length
+    ? await supabase
+      .from('sale_items')
+      .select('sale_id, product_id, quantity')
+      .eq('business_id', business.id)
+      .in('sale_id', saleIds)
+    : { data: [], error: null };
+  const productIds = [...new Set((saleItems ?? []).map(({ product_id }) => product_id))];
+  const { data: products, error: productsError } = productIds.length
+    ? await supabase
+      .from('products')
+      .select('id, name')
+      .eq('business_id', business.id)
+      .in('id', productIds)
+    : { data: [], error: null };
+  const productNames = new Map((products ?? []).map(({ id, name }) => [id, name]));
+  const productNamesBySale = new Map<string, string[]>();
+  for (const item of saleItems ?? []) {
+    const name = productNames.get(item.product_id);
+    if (!name) continue;
+    const saleProductNames = productNamesBySale.get(item.sale_id) ?? [];
+    saleProductNames.push(`${name} × ${item.quantity}`);
+    productNamesBySale.set(item.sale_id, saleProductNames);
+  }
+  const productNamesError = saleItemsError ?? productsError;
   const monthlySales = days.reduce((sum, day) => sum + (jsonNumber(day.sales_total) ?? 0), 0);
   const monthlyPaid = days.reduce((sum, day) => sum + (jsonNumber(day.paid_total) ?? 0), 0);
   const monthlyBalance = days.reduce((sum, day) => sum + (jsonNumber(day.balance_due) ?? 0), 0);
@@ -81,6 +109,11 @@ export default async function SalesPage({ searchParams }: { searchParams: SaleSe
         </p>
       ) : (
         <>
+          {productNamesError ? (
+            <p role="alert" className="mb-4 rounded border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950">
+              Product names could not be loaded for sales. Check database access and refresh the page.
+            </p>
+          ) : null}
           <section aria-label="Monthly totals" className="mb-5 grid gap-3 sm:grid-cols-3">
             {[
               ['Total sales', monthlySales],
@@ -97,11 +130,12 @@ export default async function SalesPage({ searchParams }: { searchParams: SaleSe
           <section aria-label="Sales list" className="overflow-hidden rounded border border-neutral-200">
             <h2 className="border-b border-neutral-200 px-4 py-3 text-sm font-semibold">Sales</h2>
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[850px] border-collapse text-left text-xs sm:text-sm">
+              <table className="w-full min-w-[980px] border-collapse text-left text-xs sm:text-sm">
                 <thead className="bg-[#F5F5F5] text-[11px] uppercase text-neutral-600">
                   <tr>
                     <th className="px-3 py-2">Date / time</th>
                     <th className="px-3 py-2">Sale</th>
+                    <th className="px-3 py-2">Products</th>
                     <th className="px-3 py-2">Customer</th>
                     <th className="px-3 py-2">Payment</th>
                     <th className="px-3 py-2">Status</th>
@@ -117,8 +151,7 @@ export default async function SalesPage({ searchParams }: { searchParams: SaleSe
                     const total = jsonNumber(sale.sale.total_amount) ?? 0;
                     const paid = jsonNumber(sale.sale.amount_paid) ?? 0;
                     const createdAt = jsonString(sale.sale.created_at);
-                    const createdBy = jsonString(sale.sale.created_by);
-                    const canEdit = business.role !== 'attendant' || createdBy === user.id;
+                    const saleProductNames = id ? productNamesBySale.get(id) ?? [] : [];
                     return (
                       <tr key={id} className="border-t border-neutral-200">
                         <td className="whitespace-nowrap px-3 py-2">
@@ -135,6 +168,13 @@ export default async function SalesPage({ searchParams }: { searchParams: SaleSe
                             {id?.slice(0, 8)}
                           </Link>
                         </td>
+                        <td className="max-w-64 px-3 py-2">
+                          {productNamesError
+                            ? 'Unavailable'
+                            : saleProductNames.length
+                              ? saleProductNames.join(', ')
+                              : 'No product items'}
+                        </td>
                         <td className="px-3 py-2">
                           {jsonString(sale.sale.customer_name)
                             ? `${jsonString(sale.sale.customer_name)} · ${jsonString(sale.sale.customer_phone) ?? ''}`
@@ -146,14 +186,14 @@ export default async function SalesPage({ searchParams }: { searchParams: SaleSe
                         <td className="px-3 py-2 text-right">{formatKes(Math.max(0, total - paid))}</td>
                         <td className="px-3 py-2 text-right font-medium">{formatKes(total)}</td>
                         <td className="px-3 py-2">
-                          {canEdit ? <Link href={`/sales/${id}/edit`} className="text-[#E31E24] underline">Edit</Link> : '—'}
+                          <Link href={`/sales/${id}/edit`} className="text-[#E31E24] underline">Edit</Link>
                         </td>
                       </tr>
                     );
                   })}
                   {!sales.length ? (
                     <tr>
-                      <td colSpan={9} className="px-4 py-8 text-center text-neutral-600">
+                      <td colSpan={10} className="px-4 py-8 text-center text-neutral-600">
                         Sales not available for this month.
                       </td>
                     </tr>

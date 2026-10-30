@@ -94,7 +94,7 @@ export default async function EditSalePage({ params }: { params: Promise<{ id: s
         initialCustomerName={account.customer_name ?? ''}
         initialCustomerPhone={account.customer_phone ?? ''}
         initialPaymentMethod={jsonString(sale.payment_method) ?? 'cash'}
-        canViewCosts={business.role !== 'attendant'}
+        canViewCosts
       />
     </>
   );

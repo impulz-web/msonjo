@@ -52,10 +52,6 @@ export async function requireMsonjoAdmin() {
   if (error || !user) {
     redirect('/login');
   }
-  if (user.app_metadata.role === 'admin') {
-    return user;
-  }
-
   const businesses = await getAuthorizedBusinesses(supabase, user.id);
   if (!businesses.some((business) => business.role === 'owner')) {
     redirect('/dashboard');

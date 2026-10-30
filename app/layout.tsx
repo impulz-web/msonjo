@@ -8,6 +8,7 @@ import {
   getAuthorizedBusinesses,
   type AuthorizedBusiness,
 } from '@/lib/bizzflow/businesses';
+import { isLocalDashboardPreview } from '@/lib/bizzflow/local-preview';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import './globals.css';
 
@@ -37,6 +38,23 @@ export default async function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   const requestHeaders = await headers();
   const pathname = requestHeaders.get('x-msonjo-pathname') ?? '/';
+
+  if (pathname === '/dashboard' && isLocalDashboardPreview()) {
+    return (
+      <html lang="en">
+        <body className={`${plusJakartaSans.variable} min-h-screen bg-white text-[#252525] antialiased`}>
+          <InventoryShell
+            activeBusinessName="MSONJO GAS & HOUSE HOLD"
+            userEmail="Local preview"
+            canManageUsers={false}
+            localPreview
+          >
+            {children}
+          </InventoryShell>
+        </body>
+      </html>
+    );
+  }
 
   if (publicPaths.has(pathname)) {
     return (
@@ -81,7 +99,7 @@ export default async function RootLayout({
             : typeof user.app_metadata.username === 'string'
               ? `@${user.app_metadata.username}`
               : 'Signed-in account'}
-          canManageUsers={user.app_metadata.role === 'admin' || business.role === 'owner'}
+          canManageUsers={business.role === 'owner'}
         >
           {children}
         </InventoryShell>

@@ -3,7 +3,7 @@ import AdminUserPanel from './AdminUserPanel';
 import { createSupabaseAdminClient, requireMsonjoAdmin } from '@/lib/supabase/admin';
 
 export default async function TeamPage() {
-  await requireMsonjoAdmin();
+  const currentUser = await requireMsonjoAdmin();
   const admin = createSupabaseAdminClient();
 
   const { data: business, error: businessError } = await admin
@@ -64,9 +64,9 @@ export default async function TeamPage() {
     <>
       <InventoryPageHeader
         title="Staff and user management"
-        description="Create username-and-password accounts for MSONJO managers and attendants. The business owner can manage staff access here."
+        description="Only the MSONJO owner can add accounts and manage roles. All business members can use inventory, sales, and reports."
       />
-      <AdminUserPanel users={users} />
+      <AdminUserPanel users={users} currentUserId={currentUser.id} />
     </>
   );
 }

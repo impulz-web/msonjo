@@ -30,6 +30,23 @@ updates. The service-role key is loaded by a server-only module for admin
 operations. **Never configure it in a `NEXT_PUBLIC_*` variable, send it to a
 browser, or commit it to the repository.**
 
+In Supabase Authentication URL Configuration, set the Site URL to the exact
+production origin used for `MSONJO_SITE_URL`, and allow the exact callback URL
+`<MSONJO_SITE_URL>/auth/callback`. Add `http://localhost:3000/auth/callback`
+only when developing locally; do not use broad wildcard redirect entries for
+production. Public signups should remain disabled because MSONJO accounts are
+provisioned by an administrator.
+
+For a local, read-only dashboard preview without signing in, set
+`MSONJO_LOCAL_DASHBOARD_PREVIEW=true` in `.env.local` and run `npm run dev`.
+This mode displays no mock inventory or business activity and makes no
+Supabase requests on the dashboard. Navigation and action links remain visible;
+opening them uses the normal authentication flow, and saving data requires a
+connected, signed-in business account. The preview itself cannot write data and
+is guarded to development mode only. Remove the setting or set it to `false`
+to return to normal Supabase authentication and view live dashboard data. It
+cannot be enabled by this flag in production builds or on Vercel.
+
 Run `npm run typecheck`, `npm run lint`, and `npm run build` for local
 validation. Vercel can use its standard Next.js build detection and `npm run
 build`; `npm start` runs `next start` for local production-mode checks.
@@ -51,10 +68,17 @@ database before applying migrations. Apply the files in
 4. `20261019020000_bizzflow_typed_manual_sale_items.sql`
 5. `20261020000000_msonjo_single_business.sql`
 6. `20261021000000_auth_user_membership_and_role_management.sql`
+7. `20261022000000_preserve_history_on_user_deletion.sql`
+8. `20261023000000_all_members_inventory_access.sql`
 
-The final migration renames the existing sole business to MSONJO while
-preserving its business ID and related product, sale, and stock records. On a
-fresh database, it creates the fixed MSONJO business. It also removes
+The history-preservation migration preserves sales, stock movements, payments,
+and sale-edit history when a managed Auth user is deleted. It clears only the
+deleted user's creator attribution by setting those nullable references to
+`NULL`.
+
+The single-business migration renames the existing sole business to MSONJO
+while preserving its business ID and related product, sale, and stock records.
+On a fresh database, it creates the fixed MSONJO business. It also removes
 authenticated business updates and drops the public business-creation
 function. It **aborts and rolls back** if more than one business exists. This
 is deliberate: automatically combining tenant data or memberships could
@@ -68,14 +92,14 @@ apply them. Confirm the Supabase project reference before using the Supabase
 CLI or SQL editor. The migration state must be checked in the target project;
 no remote database migration is claimed here.
 
-The final migration adds an Auth trigger: each user created in Supabase Auth
-is automatically added to the MSONJO business with the `attendant` inventory
-role. It also adds existing Auth users who do not already have MSONJO
-membership. The MSONJO owner or a trusted Supabase Auth administrator can
-open **Staff and user management** to create username-and-password accounts
-for managers and attendants. The inventory role is separate from
-`app_metadata.role = 'admin'`; owners are authorized from their MSONJO
-membership, while the trusted Auth role also grants user-management access.
+The Auth membership migration adds a trigger so each user created in Supabase
+Auth is automatically added to the MSONJO business with the `attendant`
+inventory role. It also adds existing Auth users who do not already have
+MSONJO membership. The all-members access migration lets every MSONJO member
+view and edit inventory and sales, and access full reports. This includes
+cost-price and profit figures. Only a user with the MSONJO `owner` membership
+can create accounts or manage user roles; `app_metadata.role = 'admin'` alone
+does not grant access to user administration.
 
 ### Initial administrator and staff accounts
 
@@ -85,14 +109,14 @@ manually in the Supabase dashboard, using a username-based internal email:
 `https://abc123.supabase.co`, use `owner@msonjo-abc123.com`). These internal
 addresses are never used for email delivery; managed accounts are created
 with email confirmation enabled. Set a strong initial password and mark the
-email as confirmed. Then set the trusted app metadata and business owner
+email as confirmed. Then set the username metadata and business owner
 membership in the dedicated project's SQL editor, replacing the username and
 email:
 
 ```sql
 update auth.users
 set raw_app_meta_data = coalesce(raw_app_meta_data, '{}'::jsonb)
-      || jsonb_build_object('role', 'admin', 'username', 'owner'),
+      || jsonb_build_object('username', 'owner'),
     raw_user_meta_data = coalesce(raw_user_meta_data, '{}'::jsonb)
       || jsonb_build_object('name', 'MSONJO Owner')
 where lower(email) = lower('owner@msonjo-<project-ref>.com');
@@ -107,13 +131,13 @@ on conflict (business_id, user_id)
 do update set role = excluded.role;
 ```
 
-The MSONJO owner membership or `app_metadata.role = 'admin'` grants access to
-Staff and user management; user-editable `user_metadata` is never used for the
-authorization check. Sign in with the owner username or exact Supabase Auth
-email and password, then use **Staff and user management** to create
-manager/attendant username-and-password accounts, optionally record a contact
-email, and manage staff roles. Owners and trusted Auth administrators can view
-and update contact emails in the user list; these are stored as
+The MSONJO owner membership grants access to Staff and user management;
+user-editable `user_metadata` and `app_metadata.role = 'admin'` are never used
+for this authorization check. Sign in with the owner username or exact
+Supabase Auth email and password, then use **Staff and user management** to
+create manager/attendant username-and-password accounts, optionally record a
+contact email, and manage staff roles. Only the owner can view and update
+contact emails in the user list; these are stored as
 `user_metadata.contact_email` in Supabase Auth.
 Changing a contact email does not change the generated Auth sign-in email, so
 username/password login continues to work and no email confirmation is sent.

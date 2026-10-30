@@ -8,7 +8,7 @@ import { parseProduct } from '@/lib/bizzflow/operations-data';
 export default async function EditProductPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
-  const { supabase, business } = await getActiveBusinessContext(['owner', 'manager']);
+  const { supabase, business } = await getActiveBusinessContext();
   const { data, error } = await supabase.rpc('get_product_detail', {
     p_business_id: business.id,
     p_product_id: id,

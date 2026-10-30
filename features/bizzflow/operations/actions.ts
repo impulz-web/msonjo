@@ -96,7 +96,7 @@ export async function createProductAction(
     return { error: 'Check the product details, prices, and whole-number stock values.' };
   }
 
-  const { supabase, business } = await getActiveBusinessContext(['owner', 'manager']);
+  const { supabase, business } = await getActiveBusinessContext();
   const { data, error } = await supabase.rpc('create_product', {
     p_business_id: business.id,
     p_name: name,
@@ -138,7 +138,7 @@ export async function updateProductAction(
     return { error: 'Check the product details, prices, and stock threshold.' };
   }
 
-  const { supabase, business } = await getActiveBusinessContext(['owner', 'manager']);
+  const { supabase, business } = await getActiveBusinessContext();
   const { data, error } = await supabase.from('products').update({
     name,
     sku: sku || null,
@@ -163,7 +163,7 @@ export async function updateProductAction(
 export async function archiveProductAction(formData: FormData): Promise<void> {
   const productId = read(formData, 'product_id');
   if (!/^[0-9a-f-]{36}$/i.test(productId)) redirect('/products');
-  const { supabase, business } = await getActiveBusinessContext(['owner', 'manager']);
+  const { supabase, business } = await getActiveBusinessContext();
   const { data, error } = await supabase.from('products').update({ is_archived: true })
     .eq('business_id', business.id).eq('id', productId).select('id').maybeSingle();
   if (error || !data) redirect('/products?notice=archive-error');
@@ -192,7 +192,7 @@ export async function adjustStockAction(
     return { error: 'Enter a valid movement type and non-zero signed quantity.' };
   }
 
-  const { supabase, business } = await getActiveBusinessContext(['owner', 'manager']);
+  const { supabase, business } = await getActiveBusinessContext();
   const { error } = await supabase.rpc('adjust_stock', {
     p_business_id: business.id,
     p_product_id: productId,
@@ -247,7 +247,7 @@ export async function createSaleAction(
   }
 
   const { supabase, business } = await getActiveBusinessContext();
-  const items = parseSaleItems(rawItems, business.role !== 'attendant');
+  const items = parseSaleItems(rawItems, true);
   if (!items) return { error: 'Check product names, quantities, and selling prices.' };
 
   const { data, error } = await supabase.rpc('record_sale_with_payment', {
@@ -349,7 +349,7 @@ export async function editSaleAction(
   }
 
   const { supabase, business } = await getActiveBusinessContext();
-  const items = parseSaleItems(read(formData, 'items'), business.role !== 'attendant');
+  const items = parseSaleItems(read(formData, 'items'), true);
   if (!items) return { error: 'Check product names, quantities, and selling prices.' };
   const { data, error } = await supabase.rpc('edit_sale_with_lines', {
     p_business_id: business.id,

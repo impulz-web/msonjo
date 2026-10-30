@@ -21,8 +21,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
   const product = parseProduct(data);
   if (!product) notFound();
 
-  const canManage = business.role === 'owner' || business.role === 'manager';
-  const canAdjust = canManage && !product.is_archived;
+  const canAdjust = !product.is_archived;
   const status = product.is_archived ? 'Archived'
     : product.quantity === 0 ? 'Out of stock'
       : product.quantity <= product.low_stock_threshold ? 'Low stock' : 'In stock';
@@ -32,7 +31,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
       <InventoryPageHeader
         title={product.name}
         description={product.is_archived ? 'Archived product details and historical stock records.' : 'Product details and current stock balance.'}
-        action={canManage && !product.is_archived ? { label: 'Edit product', href: `/products/${id}/edit` } : { label: 'Back to products', href: '/products' }}
+        action={!product.is_archived ? { label: 'Edit product', href: `/products/${id}/edit` } : { label: 'Back to products', href: '/products' }}
       />
       <section aria-label="Product details" className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {[
@@ -40,10 +39,8 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
           ['Selling price', formatKes(product.selling_price)],
           ['Quantity on hand', String(product.quantity)], ['Stock status', status],
           ['Low-stock threshold', String(product.low_stock_threshold)],
-          ...(canManage ? [
-            ['Cost price', product.cost_price === null ? '—' : formatKes(product.cost_price)],
-            ['Stock value at cost', product.cost_price === null ? '—' : formatKes(product.cost_price * product.quantity)],
-          ] : []),
+          ['Cost price', product.cost_price === null ? '—' : formatKes(product.cost_price)],
+          ['Stock value at cost', product.cost_price === null ? '—' : formatKes(product.cost_price * product.quantity)],
         ].map(([label, value]) => (
           <div key={label} className="rounded border border-neutral-200 p-4">
             <h2 className="text-xs font-medium text-neutral-600">{label}</h2>
@@ -57,7 +54,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
           <StockAdjustmentForm productId={product.id} operationKey={randomUUID()} />
         </section>
       ) : null}
-      {canManage && !product.is_archived ? (
+      {!product.is_archived ? (
         <form action={archiveProductAction} className="mt-8 border-t border-neutral-200 pt-5">
           <input type="hidden" name="product_id" value={product.id} />
           <h2 className="text-sm font-semibold">Archive product</h2>

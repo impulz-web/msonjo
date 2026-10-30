@@ -5,7 +5,7 @@ import ProductForm from '@/features/bizzflow/operations/ProductForm';
 import { getActiveBusinessContext } from '@/lib/bizzflow/context';
 
 export default async function NewProductPage() {
-  await getActiveBusinessContext(['owner', 'manager']);
+  await getActiveBusinessContext();
   return (
     <>
       <InventoryPageHeader title="Add product" description="Create a product and optionally record its initial stock." />

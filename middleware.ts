@@ -2,6 +2,7 @@ import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 import type { Database } from '@/lib/database.types';
 import { getSupabaseConfig } from '@/lib/supabase/config';
+import { isLocalDashboardPreview } from '@/lib/bizzflow/local-preview';
 
 const publicPaths = new Set([
   '/',
@@ -20,6 +21,12 @@ function carryCookies(from: NextResponse, to: NextResponse) {
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   const isPublicPath = publicPaths.has(pathname);
+  if (pathname === '/dashboard' && isLocalDashboardPreview()) {
+    const requestHeaders = new Headers(request.headers);
+    requestHeaders.set('x-msonjo-pathname', pathname);
+    return NextResponse.next({ request: { headers: requestHeaders } });
+  }
+
   const config = getSupabaseConfig();
 
   if (!config) {

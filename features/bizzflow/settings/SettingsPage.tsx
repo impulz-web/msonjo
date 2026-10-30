@@ -3,9 +3,9 @@ import AccountSettingsForm from './AccountSettingsForm';
 import { getActiveBusinessContext } from '@/lib/bizzflow/context';
 
 const roleLabels = {
-  owner: 'Owner',
-  manager: 'Manager',
-  attendant: 'Attendant',
+  owner: 'Owner — full inventory access',
+  manager: 'Manager — full inventory access',
+  attendant: 'Attendant — full inventory access',
 } as const;
 
 export default async function SettingsPage() {
@@ -22,7 +22,7 @@ export default async function SettingsPage() {
       <InventoryPageHeader
         title="Settings"
         description="Manage your account details and review your MSONJO workspace access."
-        action={user.app_metadata.role === 'admin' || business.role === 'owner'
+        action={business.role === 'owner'
           ? { label: 'Staff & users', href: '/staff' }
           : undefined}
       />
@@ -58,14 +58,12 @@ export default async function SettingsPage() {
             <div className="flex flex-wrap justify-between gap-2 py-3">
               <dt className="text-neutral-600">User administration</dt>
               <dd className="font-medium text-[#252525]">
-                {user.app_metadata.role === 'admin'
-                  ? 'Administrator'
-                  : business.role === 'owner' ? 'Owner access' : 'Not enabled'}
+                {business.role === 'owner' ? 'Owner access' : 'Owner only'}
               </dd>
             </div>
           </dl>
           <p className="mt-3 border-t border-neutral-200 pt-3 text-xs leading-5 text-neutral-600">
-            The MSONJO owner manages staff access and workspace roles.
+            Only the MSONJO owner can add users or manage workspace roles. All business members can use inventory, sales, and reports.
           </p>
         </section>
       </div>

@@ -35,8 +35,8 @@ function isMembershipRole(value: string): value is 'owner' | 'manager' | 'attend
   return value === 'owner' || value === 'manager' || value === 'attendant';
 }
 
-function isCreatableStaffRole(value: string): value is 'manager' | 'attendant' {
-  return value === 'manager' || value === 'attendant';
+function isCreatableStaffRole(value: string): value is 'owner' | 'manager' | 'attendant' {
+  return value === 'owner' || value === 'manager' || value === 'attendant';
 }
 
 export async function createManagedUserAction(
@@ -64,7 +64,7 @@ export async function createManagedUserAction(
     return { error: 'Use a password between 12 and 72 characters.' };
   }
   if (!isCreatableStaffRole(role)) {
-    return { error: 'Choose manager or attendant for a new staff account.' };
+    return { error: 'Choose a valid inventory role.' };
   }
 
   const supabaseUrl = process.env.MSONJO_SUPABASE_URL;
@@ -292,4 +292,58 @@ export async function resetManagedUserPasswordAction(
   return {
     success: 'Password reset. Copy the new password from this form now; it cannot be retrieved later.',
   };
+}
+
+export async function deleteManagedUserAction(
+  _state: AdminFormState,
+  formData: FormData,
+): Promise<AdminFormState> {
+  const currentUser = await requireMsonjoAdmin();
+  const userId = field(formData, 'user_id');
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(userId)) {
+    return { error: 'Choose a valid MSONJO account.' };
+  }
+  if (userId === currentUser.id) {
+    return { error: 'You cannot delete your own signed-in account.' };
+  }
+
+  const admin = createSupabaseAdminClient();
+  const { data: business, error: businessError } = await admin
+    .from('businesses')
+    .select('id')
+    .eq('slug', 'msonjo-gas-house-hold')
+    .maybeSingle();
+  if (businessError || !business) {
+    return { error: 'The MSONJO business could not be loaded. Verify the database migration.' };
+  }
+
+  const { data: membership, error: membershipError } = await admin
+    .from('business_members')
+    .select('role')
+    .eq('business_id', business.id)
+    .eq('user_id', userId)
+    .maybeSingle();
+  if (membershipError || !membership) {
+    return { error: 'That account is not an authorized MSONJO user.' };
+  }
+
+  if (membership.role === 'owner') {
+    const { count, error: ownersError } = await admin
+      .from('business_members')
+      .select('user_id', { count: 'exact', head: true })
+      .eq('business_id', business.id)
+      .eq('role', 'owner');
+    if (ownersError) return { error: 'Unable to verify MSONJO owner access. Try again.' };
+    if (count === 1) {
+      return { error: 'Assign another user as owner before deleting the last owner.' };
+    }
+  }
+
+  const { error: deleteError } = await admin.auth.admin.deleteUser(userId);
+  if (deleteError) {
+    return { error: 'The account could not be deleted. Verify the account and try again.' };
+  }
+
+  revalidatePath('/staff');
+  return { success: 'User account deleted. Historical sales and stock records were preserved.' };
 }

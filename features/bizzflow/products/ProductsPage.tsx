@@ -1,7 +1,8 @@
 import Link from 'next/link';
 import InventoryPageHeader from '../shared/InventoryPageHeader';
+import ProductTable from './ProductTable';
 import { getActiveBusinessContext } from '@/lib/bizzflow/context';
-import { formatKes, jsonNumber, jsonObject, jsonString, parseProduct, type ProductRow } from '@/lib/bizzflow/operations-data';
+import { jsonNumber, jsonObject, jsonString, parseProduct, type ProductRow } from '@/lib/bizzflow/operations-data';
 
 type ProductSearchParams = {
   q?: string;
@@ -53,7 +54,6 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
   const categories = Array.isArray(categoriesValue)
     ? categoriesValue.map((value) => jsonString(value)).filter((value): value is string => value !== null)
     : [];
-  const canManage = business.role === 'owner' || business.role === 'manager';
   const base = { q: params.q, category: params.category, stock: params.stock, sort: params.sort };
 
   return (
@@ -61,7 +61,7 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
       <InventoryPageHeader
         title="Products"
         description="Search and manage product details and current stock."
-        action={canManage ? { label: 'Add product', href: '/products/new' } : undefined}
+        action={{ label: 'Add product', href: '/products/new' }}
       />
       {searchParams.notice === 'archived' ? <p role="status" className="mb-4 rounded border border-neutral-200 bg-[#F5F5F5] p-3 text-sm">Product archived. Existing sales and stock history were preserved.</p> : null}
       {searchParams.notice === 'archive-error' ? <p role="alert" className="mb-4 rounded border border-neutral-200 bg-[#F5F5F5] p-3 text-sm">Product could not be archived. Refresh the product list and try again.</p> : null}
@@ -113,51 +113,7 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
             <p>{total} active {total === 1 ? 'product' : 'products'}</p>
             <p>Stock valuation uses cost price.</p>
           </div>
-          <div className="overflow-hidden rounded border border-neutral-200 bg-white">
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[740px] border-collapse text-left text-sm">
-                <thead className="bg-[#F5F5F5] text-xs font-medium uppercase tracking-wide text-neutral-600">
-                  <tr>
-                    <th className="px-4 py-3">Product</th><th className="px-4 py-3">Product code</th>
-                    <th className="px-4 py-3">Category</th><th className="px-4 py-3">Selling price</th>
-                    <th className="px-4 py-3">Quantity</th>{canManage ? <th className="px-4 py-3">Stock value</th> : null}
-                    <th className="px-4 py-3">Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {products.map((product) => {
-                    const status = product.quantity === 0 ? 'Out of stock'
-                      : product.quantity <= product.low_stock_threshold ? 'Low stock' : 'In stock';
-                    return (
-                      <tr key={product.id} className="border-t border-neutral-200">
-                        <td className="px-4 py-3 font-medium"><Link href={`/products/${product.id}`} className="text-[#E31E24] underline underline-offset-2">{product.name}</Link></td>
-                        <td className="px-4 py-3">{product.sku || '—'}</td>
-                        <td className="px-4 py-3">{product.category || '—'}</td>
-                        <td className="px-4 py-3">{formatKes(product.selling_price)}</td>
-                        <td className="px-4 py-3">{product.quantity}</td>
-                        {canManage ? <td className="px-4 py-3">{product.cost_price === null ? '—' : formatKes(product.cost_price * product.quantity)}</td> : null}
-                        <td className="px-4 py-3">
-                          <span className={`rounded px-2 py-1 text-xs font-medium ${
-                            status === 'In stock'
-                              ? 'bg-[#F5F5F5] text-[#252525]'
-                              : 'bg-[#FFD600] text-[#252525]'
-                          }`}>
-                            {status}
-                          </span>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                  {!products.length ? (
-                    <tr><td colSpan={canManage ? 7 : 6} className="px-4 py-12 text-center">
-                      <p className="font-medium text-[#252525]">No active products found</p>
-                      <p className="mt-1 text-sm text-neutral-600">{params.q || params.category || params.stock !== 'all' ? 'Try changing the filters.' : 'Add your first product to start tracking stock.'}</p>
-                    </td></tr>
-                  ) : null}
-                </tbody>
-              </table>
-            </div>
-          </div>
+          <ProductTable products={products} canManage />
           {total > 50 ? (
             <nav aria-label="Product pages" className="mt-4 flex items-center justify-between text-sm">
               {params.page > 1 ? <Link href={queryHref(base, params.page - 1)} className="text-[#E31E24] underline">Previous</Link> : <span />}
