@@ -63,6 +63,7 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
         description="Search and manage product details and current stock."
         action={{ label: 'Add product', href: '/products/new' }}
       />
+      {searchParams.notice === 'deleted' ? <p role="status" className="mb-4 rounded border border-neutral-200 bg-[#F5F5F5] p-3 text-sm">Product removed from active inventory. Historical sales and stock records were preserved.</p> : null}
       {searchParams.notice === 'archived' ? <p role="status" className="mb-4 rounded border border-neutral-200 bg-[#F5F5F5] p-3 text-sm">Product archived. Existing sales and stock history were preserved.</p> : null}
       {searchParams.notice === 'archive-error' ? <p role="alert" className="mb-4 rounded border border-neutral-200 bg-[#F5F5F5] p-3 text-sm">Product could not be archived. Refresh the product list and try again.</p> : null}
       {error ? (

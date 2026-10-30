@@ -4,6 +4,7 @@ import { ChevronDown, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 import { formatKes, type ProductRow } from '@/lib/bizzflow/operations-data';
+import { deleteProductAction } from '@/features/bizzflow/operations/actions';
 
 function stockStatus(product: ProductRow) {
   if (product.is_archived) return 'Archived';
@@ -53,6 +54,7 @@ export default function ProductTable({
               <th scope="col" className="px-3 py-2.5 text-right">On hand</th>
               <th scope="col" className="px-3 py-2.5">Status</th>
               <th scope="col" className="px-3 py-2.5 text-right">Details</th>
+              <th scope="col" className="px-3 py-2.5 text-right">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -72,7 +74,7 @@ export default function ProductTable({
             })}
             {!products.length ? (
               <tr>
-                <td colSpan={canManage ? 8 : 7} className="px-4 py-10 text-center">
+                <td colSpan={canManage ? 9 : 8} className="px-4 py-10 text-center">
                   <p className="font-medium text-[#252525]">No active products found</p>
                   <p className="mt-1 text-sm text-neutral-600">
                     Add your first product to start tracking stock, or adjust the filters.
@@ -149,10 +151,32 @@ function FragmentRows({
               : <ChevronRight aria-hidden="true" className="size-3.5" />}
           </button>
         </td>
+        <td className="px-3 py-2 text-right">
+          {!product.is_archived ? (
+            <form
+              action={deleteProductAction}
+              onSubmit={(event) => {
+                if (!window.confirm(
+                  `Delete "${product.name}" from active inventory? It will be archived, and historical sales and stock records will be preserved.`,
+                )) {
+                  event.preventDefault();
+                }
+              }}
+            >
+              <input type="hidden" name="product_id" value={product.id} />
+              <button
+                type="submit"
+                className="inline-flex min-h-8 items-center rounded px-2 text-xs font-medium text-red-700 hover:bg-red-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#E31E24]"
+              >
+                Delete
+              </button>
+            </form>
+          ) : null}
+        </td>
       </tr>
       {expanded ? (
         <tr id={`product-details-${product.id}`} className="border-t border-neutral-100 bg-neutral-50">
-          <td colSpan={canManage ? 8 : 7} className="px-4 py-4">
+          <td colSpan={canManage ? 9 : 8} className="px-4 py-4">
             <dl className="grid gap-x-6 gap-y-3 sm:grid-cols-2 lg:grid-cols-4">
               {details.map(([label, value]) => (
                 <div key={label}>

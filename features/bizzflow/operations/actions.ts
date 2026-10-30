@@ -160,16 +160,28 @@ export async function updateProductAction(
   return { success: 'Product details saved.' };
 }
 
-export async function archiveProductAction(formData: FormData): Promise<void> {
-  const productId = read(formData, 'product_id');
-  if (!/^[0-9a-f-]{36}$/i.test(productId)) redirect('/products');
+async function archiveProductFromActiveInventory(productId: string): Promise<boolean> {
   const { supabase, business } = await getActiveBusinessContext();
   const { data, error } = await supabase.from('products').update({ is_archived: true })
     .eq('business_id', business.id).eq('id', productId).select('id').maybeSingle();
-  if (error || !data) redirect('/products?notice=archive-error');
+  if (error || !data) return false;
   revalidatePath('/products');
   revalidatePath(`/products/${productId}`);
+  return true;
+}
+
+export async function archiveProductAction(formData: FormData): Promise<void> {
+  const productId = read(formData, 'product_id');
+  if (!/^[0-9a-f-]{36}$/i.test(productId)) redirect('/products');
+  if (!await archiveProductFromActiveInventory(productId)) redirect('/products?notice=archive-error');
   redirect('/products?notice=archived');
+}
+
+export async function deleteProductAction(formData: FormData): Promise<void> {
+  const productId = read(formData, 'product_id');
+  if (!/^[0-9a-f-]{36}$/i.test(productId)) redirect('/products');
+  if (!await archiveProductFromActiveInventory(productId)) redirect('/products?notice=archive-error');
+  redirect('/products?notice=deleted');
 }
 
 export async function adjustStockAction(
